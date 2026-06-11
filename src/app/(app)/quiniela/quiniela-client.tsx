@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { MATCHES, type GroupLetter, type Phase } from "@/lib/db/seed-data";
 import {
   PHASES,
@@ -16,6 +16,7 @@ import {
   computeGroupStandings,
   groupMatchPoints,
 } from "@/lib/tournament";
+import { isSameLocalDay } from "@/lib/format";
 import { savePrediction } from "@/lib/actions/predictions";
 import { MatchCard, type SaveStatus } from "@/components/match-card";
 
@@ -50,6 +51,21 @@ export function QuinielaClient({
 
   // captured once per mount: lock display is advisory, the server re-validates
   const [now] = useState(() => Date.now());
+
+  // client-only: "today" depends on the viewer's timezone, so skip it on the
+  // server render to avoid a hydration mismatch around midnight / other TZs
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+  const todayMatches = useMemo(
+    () =>
+      MATCHES.filter((m) => isSameLocalDay(new Date(m.kickoffAt), new Date(now))).sort(
+        (a, b) => Date.parse(a.kickoffAt) - Date.parse(b.kickoffAt),
+      ),
+    [now],
+  );
   const isOpen = (matchId: number, kickoffAt: string) =>
     overrides.has(matchId) || now < Date.parse(kickoffAt);
 
@@ -178,6 +194,21 @@ export function QuinielaClient({
           </span>
         )}
       </div>
+
+      {/* today's matches */}
+      {mounted && todayMatches.length > 0 && (
+        <section className="space-y-3">
+          <h3 className="text-[11px] font-medium uppercase tracking-wider text-ink-500">
+            Hoy · {todayMatches.length} partido{todayMatches.length > 1 ? "s" : ""}
+          </h3>
+          {todayMatches.map((m) =>
+            renderCard(
+              m,
+              m.phase === "third" ? "3er puesto" : m.phase === "final" ? "🏆 Final" : `P${m.id}`,
+            ),
+          )}
+        </section>
+      )}
 
       {tab === "group" ? (
         <GroupsPanel
