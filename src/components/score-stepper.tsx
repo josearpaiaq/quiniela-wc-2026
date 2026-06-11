@@ -28,7 +28,7 @@ export function ScoreStepper({
         type="button"
         aria-label={`Subir goles ${label}`}
         onClick={() => onChange(clamp((value ?? 0) + (value === null ? 0 : 1)))}
-        className="flex h-6 w-11 items-center justify-center rounded-md border border-line text-ink-500 transition hover:border-volt-400 hover:text-volt-400 active:scale-95"
+        className="flex h-6 w-11 items-center justify-center rounded-md border border-line text-ink-500 transition hover:border-volt-400 hover:text-volt-400 active:scale-95 cursor-pointer"
       >
         +
       </button>
@@ -54,7 +54,7 @@ export function ScoreStepper({
         type="button"
         aria-label={`Bajar goles ${label}`}
         onClick={() => onChange(clamp((value ?? 1) - 1))}
-        className="flex h-6 w-11 items-center justify-center rounded-md border border-line text-ink-500 transition hover:border-volt-400 hover:text-volt-400 active:scale-95"
+        className="flex h-6 w-11 items-center justify-center rounded-md border border-line text-ink-500 transition hover:border-volt-400 hover:text-volt-400 active:scale-95 cursor-pointer"
       >
         −
       </button>
