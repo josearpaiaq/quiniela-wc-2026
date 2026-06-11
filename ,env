@@ -1,8 +1,0 @@
-# Neon Postgres connection string (José la crea en neon.tech)
-DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
-
-# Secret for signing JWTs (generate with: openssl rand -base64 32)
-JWT_SECRET="change-me"
-
-# This email becomes admin on registration
-ADMIN_EMAIL="josearpaiaquintero@gmail.com"
