@@ -228,7 +228,7 @@ function GroupsPanel({
   return (
     <div className="space-y-4">
       {/* group chips */}
-      <div className="-mx-4 overflow-x-auto px-4">
+      <div className="-mx-4 overflow-x-auto px-4 py-2">
         <div className="flex gap-1.5 pb-1">
           {GROUP_LETTERS.map((letter) => {
             const filled = MATCHES.filter(
