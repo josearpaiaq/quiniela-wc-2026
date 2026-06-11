@@ -198,9 +198,16 @@ export function QuinielaClient({
       {/* today's matches */}
       {mounted && todayMatches.length > 0 && (
         <details open className="group">
-          <summary className="flex cursor-pointer select-none items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-ink-500 hover:text-ink-300 [&::-webkit-details-marker]:hidden">
-            <span className="transition-transform group-open:rotate-90">▸</span>
+          <summary className="flex cursor-pointer select-none items-center gap-2 text-[11px] font-medium uppercase tracking-wider text-ink-500 hover:text-ink-300 [&::-webkit-details-marker]:hidden">
+            <span className="grid h-6 w-6 place-items-center rounded-md border border-line bg-pitch-800 group-hover:border-volt-400/50">
+              <span className="text-sm leading-none text-volt-400 transition-transform group-open:rotate-90">
+                ▸
+              </span>
+            </span>
             Hoy · {todayMatches.length} partido{todayMatches.length > 1 ? "s" : ""}
+            <span className="ml-1 normal-case tracking-normal text-ink-500/60 group-open:hidden">
+              · toca para expandir
+            </span>
           </summary>
           <div className="mt-3 space-y-3">
             {todayMatches.map((m) =>
