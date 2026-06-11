@@ -18,7 +18,8 @@ cards interactivas del resto de la página.
 
 ## Contenido
 
-- Encabezado "Hoy · {n} partido(s)".
+- Sección colapsable (nativa `<details>/<summary>`), abierta por defecto, con
+  encabezado "Hoy · {n} partido(s)".
 - Cards completas reutilizando el `renderCard` existente, ordenadas por hora
   de kickoff. Esto da: edición inline si el partido sigue abierto; candado,
   resultado, puntos y link "Ver pronósticos de todos" si ya cerró; equipos de

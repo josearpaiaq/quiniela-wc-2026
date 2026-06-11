@@ -197,17 +197,20 @@ export function QuinielaClient({
 
       {/* today's matches */}
       {mounted && todayMatches.length > 0 && (
-        <section className="space-y-3">
-          <h3 className="text-[11px] font-medium uppercase tracking-wider text-ink-500">
+        <details open className="group">
+          <summary className="flex cursor-pointer select-none items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-ink-500 hover:text-ink-300 [&::-webkit-details-marker]:hidden">
+            <span className="transition-transform group-open:rotate-90">▸</span>
             Hoy · {todayMatches.length} partido{todayMatches.length > 1 ? "s" : ""}
-          </h3>
-          {todayMatches.map((m) =>
-            renderCard(
-              m,
-              m.phase === "third" ? "3er puesto" : m.phase === "final" ? "🏆 Final" : `P${m.id}`,
-            ),
-          )}
-        </section>
+          </summary>
+          <div className="mt-3 space-y-3">
+            {todayMatches.map((m) =>
+              renderCard(
+                m,
+                m.phase === "third" ? "3er puesto" : m.phase === "final" ? "🏆 Final" : `P${m.id}`,
+              ),
+            )}
+          </div>
+        </details>
       )}
 
       {tab === "group" ? (
