@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ScoreStepper } from "./score-stepper";
 import { TeamLabel } from "./team-label";
 import { TEAM_BY_CODE, type ScoreDTO } from "@/lib/dto";
@@ -20,6 +21,7 @@ export function MatchCard({
   saveStatus,
   result,
   groupPoints,
+  detailsHref,
   onScore,
   onWinner,
 }: {
@@ -35,6 +37,8 @@ export function MatchCard({
   saveStatus: SaveStatus;
   result: ScoreDTO | undefined;
   groupPoints: number | null;
+  /** when set (locked matches), links to the everyone's-predictions page */
+  detailsHref?: string;
   onScore: (side: "home" | "away", value: number) => void;
   onWinner: (side: "home" | "away") => void;
 }) {
@@ -114,12 +118,14 @@ export function MatchCard({
         </div>
       )}
 
-      {!open && result && (
+      {!open && (result || detailsHref) && (
         <footer className="mt-2.5 flex items-center justify-center gap-2 border-t border-line/60 pt-2 text-xs">
-          <span className="text-ink-500">
-            Real: <span className="font-mono font-semibold text-ink-100">{result.home}–{result.away}</span>
-          </span>
-          {phase === "group" && groupPoints !== null && (
+          {result && (
+            <span className="text-ink-500">
+              Real: <span className="font-mono font-semibold text-ink-100">{result.home}–{result.away}</span>
+            </span>
+          )}
+          {result && phase === "group" && groupPoints !== null && (
             <span
               className={`rounded-full px-2 py-0.5 font-mono font-semibold ${
                 groupPoints === 3
@@ -131,6 +137,11 @@ export function MatchCard({
             >
               +{groupPoints} pts
             </span>
+          )}
+          {detailsHref && (
+            <Link href={detailsHref} className="text-ink-500 underline-offset-2 hover:text-volt-400 hover:underline">
+              Ver pronósticos de todos →
+            </Link>
           )}
         </footer>
       )}

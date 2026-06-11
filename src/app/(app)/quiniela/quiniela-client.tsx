@@ -14,6 +14,7 @@ import {
   allGroupsComplete,
   buildBracket,
   computeGroupStandings,
+  groupMatchPoints,
 } from "@/lib/tournament";
 import { savePrediction } from "@/lib/actions/predictions";
 import { MatchCard, type SaveStatus } from "@/components/match-card";
@@ -21,12 +22,6 @@ import { MatchCard, type SaveStatus } from "@/components/match-card";
 type PhaseKey = Phase | "finals";
 
 const GROUP_MATCH_IDS = MATCHES.filter((m) => m.phase === "group").map((m) => m.id);
-
-function groupOutcomePoints(prediction: ScoreDTO, real: ScoreDTO): number {
-  if (prediction.home === real.home && prediction.away === real.away) return 3;
-  if (Math.sign(prediction.home - prediction.away) === Math.sign(real.home - real.away)) return 1;
-  return 0;
-}
 
 export function QuinielaClient({
   initialPredictions,
@@ -123,7 +118,8 @@ export function QuinielaClient({
         open={open}
         saveStatus={saveStatus[match.id] ?? null}
         result={real}
-        groupPoints={prediction && real ? groupOutcomePoints(prediction, real) : null}
+        groupPoints={prediction && real ? groupMatchPoints(prediction, real) : null}
+        detailsHref={open ? undefined : `/partido/${match.id}`}
         onScore={(side, value) => setScore(match.id, match.phase, side, value)}
         onWinner={(side) => setWinner(match.id, match.phase, side)}
       />

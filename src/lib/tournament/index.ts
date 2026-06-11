@@ -13,4 +13,9 @@ export {
   thirdsAssignmentFeasible,
   winnerOf,
 } from "./bracket";
-export { GROUP_EXACT_POINTS, GROUP_OUTCOME_POINTS, scoreUser } from "./scoring";
+export {
+  GROUP_EXACT_POINTS,
+  GROUP_OUTCOME_POINTS,
+  groupMatchPoints,
+  scoreUser,
+} from "./scoring";

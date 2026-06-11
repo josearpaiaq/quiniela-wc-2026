@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { MATCHES } from "../db/seed-data";
-import { scoreUser } from "./scoring";
+import { groupMatchPoints, scoreUser } from "./scoring";
 import type { Score } from "./types";
 
 /** Deterministic full tournament: home wins every match (varied scores). */
@@ -11,6 +11,15 @@ function fullTournament(): Map<number, Score> {
   }
   return scores;
 }
+
+describe("groupMatchPoints", () => {
+  it("scores exact 3, outcome 1, miss 0", () => {
+    expect(groupMatchPoints({ home: 2, away: 0 }, { home: 2, away: 0 })).toBe(3);
+    expect(groupMatchPoints({ home: 1, away: 0 }, { home: 3, away: 1 })).toBe(1);
+    expect(groupMatchPoints({ home: 1, away: 1 }, { home: 2, away: 2 })).toBe(1);
+    expect(groupMatchPoints({ home: 0, away: 2 }, { home: 1, away: 0 })).toBe(0);
+  });
+});
 
 describe("scoreUser — group stage", () => {
   it("scores exact 3, outcome 1, miss 0", () => {
