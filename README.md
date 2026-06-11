@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ⚽ Quiniela Mundial 2026
 
-## Getting Started
+Quiniela competitiva entre amigos para la Copa del Mundo 2026: cada quien pronostica los 104 partidos, el bracket de eliminación directa se arma con tus propios clasificados de grupos, y la tabla compara puntos contra los resultados reales.
 
-First, run the development server:
+Diseño y reglas completas: [`docs/superpowers/specs/2026-06-11-quiniela-mundial-2026-design.md`](docs/superpowers/specs/2026-06-11-quiniela-mundial-2026-design.md)
+
+## Stack
+
+- **Next.js 16** (App Router, Server Components + Server Actions) + TypeScript
+- **Tailwind CSS 4** — tema "partido nocturno"
+- **Neon Postgres** + **Drizzle ORM**
+- **JWT propio** (`jose`, HS256) en cookie `httpOnly` + bcryptjs
+- **Vitest** para el motor del torneo (standings, terceros, bracket, puntaje)
+
+## Setup
 
 ```bash
+npm install
+cp .env.example .env   # y llena los valores
+npm run db:push        # crea las tablas en Neon
+npm run db:seed        # carga los 48 equipos y 104 partidos oficiales
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Variables de entorno:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable | Qué es |
+|---|---|
+| `DATABASE_URL` | Connection string de Neon (pooled) |
+| `JWT_SECRET` | Secreto para firmar sesiones (`openssl rand -base64 32`) |
+| `ADMIN_EMAIL` | El email que queda como admin al registrarse |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+| Script | Acción |
+|---|---|
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` | Build de producción |
+| `npm test` | Suite de Vitest (motor + datos del seed + reglas) |
+| `npm run db:push` | Sincroniza el schema con la base |
+| `npm run db:seed` | Seed idempotente (equipos + partidos; nunca toca datos de usuarios) |
 
-To learn more about Next.js, take a look at the following resources:
+## Reglas de puntaje (resumen)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Grupos**: marcador exacto **3 pts** · acertar ganador/empate **1 pt**
+- **Eliminatorias** (por avance, equipo correcto en la ronda real): 32avos 1 · 16avos 2 · cuartos 3 · semis 4 · final 6 · campeón 8
+- Pronósticos editables hasta el kickoff de cada partido (el admin puede desbloquear casos puntuales)
+- Los pronósticos ajenos solo se ven cuando el partido ya está bloqueado
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Estructura
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+├── app/(auth)/        login y registro
+├── app/(app)/         quiniela · bracket · tabla · admin/resultados
+├── lib/tournament/    ⭐ motor puro del torneo (100% unit-tested)
+├── lib/db/            schema Drizzle, seed oficial verificado
+├── lib/actions/       server actions (auth, pronósticos, admin)
+└── proxy.ts           verificación JWT por request
+```
