@@ -41,7 +41,7 @@ Quiniela competitiva entre amigos para el Mundial 2026. Cada participante pronos
 
 ## 3. Stack y arquitectura
 
-Next.js 15 (App Router, TypeScript) como fullstack + Tailwind CSS. Drizzle ORM sobre Neon Postgres (`@neondatabase/serverless`). Deploy en Vercel. Lecturas en Server Components; escrituras con Server Actions (sin capa REST).
+Next.js 16 (App Router, TypeScript) como fullstack + Tailwind CSS. Drizzle ORM sobre Neon Postgres (`@neondatabase/serverless`). Deploy en Vercel. Lecturas en Server Components; escrituras con Server Actions (sin capa REST).
 
 ```
 src/

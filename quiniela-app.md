@@ -1,7 +1,7 @@
 # Quiniela Mundial 2026 — Plan de implementación
 
 ## Objetivo
-Construir la app aprobada en `docs/superpowers/specs/2026-06-11-quiniela-mundial-2026-design.md`: Next.js 15 fullstack + Drizzle/Neon + JWT propio, motor de torneo puro y UI móvil-first por tabs.
+Construir la app aprobada en `docs/superpowers/specs/2026-06-11-quiniela-mundial-2026-design.md`: Next.js 16 fullstack + Drizzle/Neon + JWT propio, motor de torneo puro y UI móvil-first por tabs.
 
 ## Tareas
 
