@@ -14,3 +14,12 @@ export function formatKickoff(iso: string): string {
 export function shortVenue(venue: string): string {
   return venue.split(",")[1]?.trim() ?? venue;
 }
+
+/** Same calendar day in the environment's local timezone (the viewer's, in the browser). */
+export function isSameLocalDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
