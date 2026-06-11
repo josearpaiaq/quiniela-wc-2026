@@ -5,9 +5,9 @@ Construir la app aprobada en `docs/superpowers/specs/2026-06-11-quiniela-mundial
 
 ## Tareas
 
-- [ ] **1. Scaffold**: `npx create-next-app@latest` (TS, Tailwind, App Router, `src/`) + instalar `drizzle-orm @neondatabase/serverless jose bcryptjs zod` y dev `drizzle-kit vitest`
+- [x] **1. Scaffold**: `npx create-next-app@latest` (TS, Tailwind, App Router, `src/`) + instalar `drizzle-orm @neondatabase/serverless jose bcryptjs zod` y dev `drizzle-kit vitest`
   → Verificar: `npm run dev` sirve la home; `npx vitest run` corre (sin tests aún).
-- [ ] **2. Datos oficiales** (búsqueda web): 48 equipos finales (con repechajes de marzo 2026), los 104 partidos (nº oficial, fase, grupo, kickoff UTC, sede), sources del cuadro R32 ("A1", "3CEFH", "W73") y tabla FIFA de asignación de terceros
+- [x] **2. Datos oficiales** (búsqueda web): 48 equipos finales (con repechajes de marzo 2026), los 104 partidos (nº oficial, fase, grupo, kickoff UTC, sede), sources del cuadro R32 ("A1", "3CEFH", "W73") y tabla FIFA de asignación de terceros
   → Verificar: `src/lib/db/seed-data.ts` cuadra: 48 equipos, 12 grupos × 6 partidos = 72 + 32 de llaves = 104.
 - [ ] **3. Schema + seed**: las 6 tablas del spec en Drizzle, cliente Neon, `db:push` y `db:seed` idempotente
   → Verificar: contra la instancia Neon, `teams`=48 y `matches`=104. ⚠️ Aquí pido a José las creds (`DATABASE_URL`); hasta entonces todo debe compilar sin DB.
