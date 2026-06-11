@@ -11,7 +11,7 @@ Construir la app aprobada en `docs/superpowers/specs/2026-06-11-quiniela-mundial
   → Verificar: `src/lib/db/seed-data.ts` cuadra: 48 equipos, 12 grupos × 6 partidos = 72 + 32 de llaves = 104.
 - [ ] **3. Schema + seed**: las 6 tablas del spec en Drizzle, cliente Neon, `db:push` y `db:seed` idempotente
   → Verificar: contra la instancia Neon, `teams`=48 y `matches`=104. ⚠️ Aquí pido a José las creds (`DATABASE_URL`); hasta entonces todo debe compilar sin DB.
-- [ ] **4. Motor `lib/tournament/`** (puro, sin I/O): `computeStandings`, `rankThirds`, `buildBracket`, `propagateKnockout`, `scoreUser` + unit tests de desempates, duelo directo, ranking de terceros, asignación de llaves y scoring (grupos + avance)
+- [x] **4. Motor `lib/tournament/`** (puro, sin I/O): `computeStandings`, `rankThirds`, `buildBracket`, `propagateKnockout`, `scoreUser` + unit tests de desempates, duelo directo, ranking de terceros, asignación de llaves y scoring (grupos + avance)
   → Verificar: `npx vitest run` verde con casos borde cubiertos.
 - [ ] **5. Auth JWT**: `lib/auth` (jose HS256, cookie `session` httpOnly, bcryptjs cost 10), actions `register/login/logout`, `middleware.ts`, páginas `/login` y `/registro`
   → Verificar: registro crea cookie y entra a `/quiniela`; sin cookie redirige a `/login`; `ADMIN_EMAIL` queda admin.
