@@ -24,6 +24,16 @@ const ROUND_MATCH_IDS: Record<Exclude<ScoredRound, "champion">, number[]> = {
 
 const outcome = (s: { home: number; away: number }) => Math.sign(s.home - s.away);
 
+/** Points for one match prediction against the real score: exact 3, outcome 1, else 0. */
+export function groupMatchPoints(
+  predicted: { home: number; away: number },
+  real: { home: number; away: number },
+): number {
+  if (predicted.home === real.home && predicted.away === real.away) return GROUP_EXACT_POINTS;
+  if (outcome(predicted) === outcome(real)) return GROUP_OUTCOME_POINTS;
+  return 0;
+}
+
 function teamsInRound(bracket: BracketTeams, matchIds: number[]): Set<string> {
   const teams = new Set<string>();
   for (const id of matchIds) {
@@ -51,12 +61,7 @@ export function scoreUser(
     const predicted = predictions.get(match.id);
     const real = results.get(match.id);
     if (!predicted || !real) continue;
-    let matchPoints = 0;
-    if (predicted.home === real.home && predicted.away === real.away) {
-      matchPoints = GROUP_EXACT_POINTS;
-    } else if (outcome(predicted) === outcome(real)) {
-      matchPoints = GROUP_OUTCOME_POINTS;
-    }
+    const matchPoints = groupMatchPoints(predicted, real);
     groupPointsByMatch.set(match.id, matchPoints);
     groupPoints += matchPoints;
   }
