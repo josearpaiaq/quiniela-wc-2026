@@ -2,6 +2,7 @@ import { requireAdmin } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
 import { overrideRowsToMap, rowsToScoreMap, scoreMapToRecord } from "@/lib/score-rows";
 import { buildBracket } from "@/lib/tournament";
+import { AdminTabs } from "../admin-tabs";
 import { AdminClient, type AdminOverrideRecord } from "./admin-client";
 
 export const dynamic = "force-dynamic";
@@ -32,11 +33,14 @@ export default async function AdminResultadosPage() {
   }
 
   return (
-    <AdminClient
-      results={scoreMapToRecord(results)}
-      realSlots={realSlots}
-      openOverrides={matchRows.filter((m) => m.openOverride).map((m) => m.id)}
-      knockoutOverrides={overrideRecord}
-    />
+    <div className="space-y-4">
+      <AdminTabs active="/admin/resultados" />
+      <AdminClient
+        results={scoreMapToRecord(results)}
+        realSlots={realSlots}
+        openOverrides={matchRows.filter((m) => m.openOverride).map((m) => m.id)}
+        knockoutOverrides={overrideRecord}
+      />
+    </div>
   );
 }
