@@ -128,18 +128,33 @@ export default async function PartidoPage({
           rows.map((row) => (
             <div
               key={row.userId}
-              className="flex items-center justify-between gap-2 rounded-lg border border-line bg-pitch-900 px-3 py-2 text-sm"
+              className="space-y-1.5 rounded-lg border border-line bg-pitch-900 px-3 py-2.5 text-sm"
             >
-              <Link
-                href={`/tabla/${row.userId}`}
-                className="min-w-0 truncate hover:text-volt-400"
-              >
-                {row.displayName}{" "}
-                <span className="text-xs text-ink-500">
-                  ({row.firstName} {row.lastName})
-                </span>
-              </Link>
-              <span className="flex shrink-0 items-center gap-2">
+              <div className="flex items-center justify-between gap-2">
+                <Link
+                  href={`/tabla/${row.userId}`}
+                  className="min-w-0 truncate hover:text-volt-400"
+                >
+                  {row.displayName}{" "}
+                  <span className="text-xs text-ink-500">
+                    ({row.firstName} {row.lastName})
+                  </span>
+                </Link>
+                {row.points !== null && (
+                  <span
+                    className={`shrink-0 rounded-full px-1.5 py-0.5 font-mono text-[11px] font-semibold ${
+                      row.points === 3
+                        ? "bg-volt-400/15 text-volt-400"
+                        : row.points === 1
+                          ? "bg-gold-400/15 text-gold-400"
+                          : "bg-pitch-700 text-ink-500"
+                    }`}
+                  >
+                    +{row.points}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center justify-center gap-2">
                 {row.prediction ? (
                   <>
                     <span className="font-mono font-semibold">
@@ -156,24 +171,11 @@ export default async function PartidoPage({
                           (row.prediction.winnerSide === "home" ? "local" : "visita")}
                       </span>
                     )}
-                    {row.points !== null && (
-                      <span
-                        className={`rounded-full px-1.5 py-0.5 font-mono text-[11px] font-semibold ${
-                          row.points === 3
-                            ? "bg-volt-400/15 text-volt-400"
-                            : row.points === 1
-                              ? "bg-gold-400/15 text-gold-400"
-                              : "bg-pitch-700 text-ink-500"
-                        }`}
-                      >
-                        +{row.points}
-                      </span>
-                    )}
                   </>
                 ) : (
                   <span className="text-ink-500/60">—</span>
                 )}
-              </span>
+              </div>
             </div>
           ))
         )}

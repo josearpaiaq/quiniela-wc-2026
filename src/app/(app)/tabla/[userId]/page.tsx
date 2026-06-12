@@ -167,27 +167,17 @@ export default async function QuinielaAjenaPage({
           return (
             <div
               key={match.id}
-              className="flex items-center justify-between gap-2 rounded-lg border border-line bg-pitch-900 px-3 py-2 text-sm"
+              className="space-y-2 rounded-lg border border-line bg-pitch-900 px-3 py-2.5 text-sm"
             >
-              <span className="flex min-w-0 items-center gap-2">
-                <span className="rounded bg-pitch-700 px-1.5 py-0.5 font-mono text-[10px] text-ink-300">
-                  P{match.id}
-                </span>
-                <span className="truncate text-xs text-ink-500" suppressHydrationWarning>
-                  {formatKickoff(match.kickoffAt)}
-                </span>
-              </span>
-              <span className="flex items-center gap-2">
-                <TeamLabel code={slot.home} />
-                <span className="font-mono font-semibold">
-                  {prediction.home}–{prediction.away}
-                </span>
-                <TeamLabel code={slot.away} align="right" />
-                {real && (
-                  <span className="text-[11px] text-ink-500">
-                    (real {real.home}–{real.away})
+              <div className="flex items-center justify-between gap-2">
+                <span className="flex min-w-0 items-center gap-2">
+                  <span className="rounded bg-pitch-700 px-1.5 py-0.5 font-mono text-[10px] text-ink-300">
+                    P{match.id}
                   </span>
-                )}
+                  <span className="truncate text-xs text-ink-500" suppressHydrationWarning>
+                    {formatKickoff(match.kickoffAt)}
+                  </span>
+                </span>
                 {points !== undefined && (
                   <span
                     className={`rounded-full px-1.5 py-0.5 font-mono text-[11px] font-semibold ${
@@ -201,7 +191,21 @@ export default async function QuinielaAjenaPage({
                     +{points}
                   </span>
                 )}
-              </span>
+              </div>
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                <TeamLabel code={slot.home} />
+                <span className="text-center">
+                  <span className="font-mono font-semibold">
+                    {prediction.home}–{prediction.away}
+                  </span>
+                  {real && (
+                    <span className="block font-mono text-[11px] text-ink-500">
+                      real {real.home}–{real.away}
+                    </span>
+                  )}
+                </span>
+                <TeamLabel code={slot.away} align="right" />
+              </div>
             </div>
           );
         })}
