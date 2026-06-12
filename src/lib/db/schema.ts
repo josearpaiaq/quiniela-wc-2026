@@ -29,6 +29,8 @@ export const users = pgTable("users", {
   lastName: text("last_name").notNull(),
   displayName: text("display_name").notNull(),
   isAdmin: boolean("is_admin").notNull().default(false),
+  // set by an admin password reset; forces the user to /cuenta until changed
+  mustChangePassword: boolean("must_change_password").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

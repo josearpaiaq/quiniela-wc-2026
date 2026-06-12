@@ -17,6 +17,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/quiniela", request.url));
   }
 
+  // after an admin password reset the user must set a new password first
+  if (session.mustChangePassword && pathname !== "/cuenta") {
+    return NextResponse.redirect(new URL("/cuenta", request.url));
+  }
+
   if (pathname.startsWith("/admin") && !session.admin) {
     return NextResponse.redirect(new URL("/quiniela", request.url));
   }
