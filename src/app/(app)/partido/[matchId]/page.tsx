@@ -2,9 +2,11 @@ import { and, eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { GroupTabs } from "@/components/group-tabs";
 import { TeamLabel } from "@/components/team-label";
 import { requireUser } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
+import { getVisibleGroups } from "@/lib/groups";
 import { MATCHES } from "@/lib/db/seed-data";
 import { TEAM_BY_CODE } from "@/lib/dto";
 import { formatKickoff, shortVenue } from "@/lib/format";
@@ -16,14 +18,23 @@ export const dynamic = "force-dynamic";
 
 export default async function PartidoPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ matchId: string }>;
+  searchParams: Promise<{ grupo?: string | string[] }>;
 }) {
-  await requireUser();
+  const session = await requireUser();
   const { matchId: rawId } = await params;
+  const { grupo } = await searchParams;
   const matchId = Number(rawId);
   const match = MATCHES.find((m) => m.id === matchId);
   if (!match) notFound();
+
+  // Picks are compared only inside the selected group, never across the whole app.
+  const visibleGroups = await getVisibleGroups(session);
+  const requested = typeof grupo === "string" ? grupo : undefined;
+  // invalid/foreign ids fall back silently — lookup is within the viewer's own list
+  const selected = visibleGroups.find((g) => g.id === requested) ?? visibleGroups[0];
 
   const db = getDb();
   const [[matchRow], userRows, resultRows, overrideRows] = await Promise.all([
@@ -32,24 +43,28 @@ export default async function PartidoPage({
       .from(schema.matches)
       .where(eq(schema.matches.id, matchId))
       .limit(1),
-    db
-      .select({
-        userId: schema.users.id,
-        displayName: schema.users.displayName,
-        firstName: schema.users.firstName,
-        lastName: schema.users.lastName,
-        homeScore: schema.predictions.homeScore,
-        awayScore: schema.predictions.awayScore,
-        winnerSide: schema.predictions.winnerSide,
-      })
-      .from(schema.users)
-      .leftJoin(
-        schema.predictions,
-        and(
-          eq(schema.predictions.userId, schema.users.id),
-          eq(schema.predictions.matchId, matchId),
-        ),
-      ),
+    selected
+      ? db
+          .select({
+            userId: schema.users.id,
+            displayName: schema.users.displayName,
+            firstName: schema.users.firstName,
+            lastName: schema.users.lastName,
+            homeScore: schema.predictions.homeScore,
+            awayScore: schema.predictions.awayScore,
+            winnerSide: schema.predictions.winnerSide,
+          })
+          .from(schema.groupMembers)
+          .innerJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
+          .leftJoin(
+            schema.predictions,
+            and(
+              eq(schema.predictions.userId, schema.users.id),
+              eq(schema.predictions.matchId, matchId),
+            ),
+          )
+          .where(eq(schema.groupMembers.groupId, selected.id))
+      : Promise.resolve([]),
     db.select().from(schema.results),
     db.select().from(schema.knockoutOverrides),
   ]);
@@ -118,9 +133,22 @@ export default async function PartidoPage({
 
       <section className="space-y-2">
         <h3 className="text-[11px] font-medium uppercase tracking-wider text-ink-500">
-          Pronósticos de todos
+          {selected ? `Pronósticos de ${selected.name}` : "Pronósticos del grupo"}
         </h3>
-        {!visible ? (
+        <GroupTabs
+          groups={visibleGroups}
+          selectedId={selected?.id ?? ""}
+          hrefFor={(groupId) => `/partido/${matchId}?grupo=${groupId}`}
+        />
+        {!selected ? (
+          <p className="rounded-xl border border-dashed border-line-bright px-4 py-6 text-center text-sm text-ink-500">
+            Únete a un grupo desde{" "}
+            <Link href="/tabla" className="font-medium text-volt-400 hover:text-volt-300">
+              la tabla
+            </Link>{" "}
+            para comparar pronósticos.
+          </p>
+        ) : !visible ? (
           <p className="rounded-xl border border-dashed border-line-bright px-4 py-6 text-center text-sm text-ink-500">
             Los pronósticos se revelan cuando el partido cierra.
           </p>
