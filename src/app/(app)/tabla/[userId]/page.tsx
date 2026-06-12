@@ -27,7 +27,7 @@ export default async function QuinielaAjenaPage({
 }: {
   params: Promise<{ userId: string }>;
 }) {
-  await requireUser();
+  const session = await requireUser();
   const { userId } = await params;
   const db = getDb();
 
@@ -38,6 +38,23 @@ export default async function QuinielaAjenaPage({
     .limit(1)
     .catch(() => []);
   if (!user) notFound();
+
+  // only co-members of some group (or the admin) can browse a user's sheet;
+  // notFound, not redirect, so existence isn't revealed
+  if (!session.admin && session.sub !== userId) {
+    const [mine, theirs] = await Promise.all([
+      db
+        .select({ groupId: schema.groupMembers.groupId })
+        .from(schema.groupMembers)
+        .where(eq(schema.groupMembers.userId, session.sub)),
+      db
+        .select({ groupId: schema.groupMembers.groupId })
+        .from(schema.groupMembers)
+        .where(eq(schema.groupMembers.userId, userId)),
+    ]);
+    const myGroups = new Set(mine.map((row) => row.groupId));
+    if (!theirs.some((row) => myGroups.has(row.groupId))) notFound();
+  }
 
   const [predictionRows, resultRows, overrideRows, openRows] = await Promise.all([
     db.select().from(schema.predictions).where(eq(schema.predictions.userId, userId)),
