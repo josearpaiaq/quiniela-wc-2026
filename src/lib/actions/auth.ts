@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getDb, schema } from "../db";
 import { clearSessionCookie, createSessionCookie } from "../auth/session";
+import { inviteCodeSchema } from "../groups";
 
 export interface AuthFormState {
   error: string | null;
@@ -17,6 +18,7 @@ const registerSchema = z.object({
   firstName: z.string().trim().min(1, "Ingresa tu nombre").max(60),
   lastName: z.string().trim().min(1, "Ingresa tu apellido").max(60),
   displayName: z.string().trim().max(40, "Máximo 40 caracteres").optional(),
+  inviteCode: inviteCodeSchema.optional(),
 });
 
 const loginSchema = z.object({
@@ -38,6 +40,7 @@ export async function register(
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
     displayName: formData.get("displayName") || undefined,
+    inviteCode: String(formData.get("inviteCode") ?? "").trim() || undefined,
   });
   if (!parsed.success) return { error: firstIssue(parsed.error) };
 
@@ -49,6 +52,22 @@ export async function register(
       : `${firstName} ${lastName[0]}.`;
 
   const db = getDb();
+
+  // Resolve the invite code BEFORE creating the user (neon-http has no
+  // transactions): a bad code must never leave a half-registered account.
+  let groupId: string | null = null;
+  if (parsed.data.inviteCode) {
+    const [group] = await db
+      .select({ id: schema.groups.id })
+      .from(schema.groups)
+      .where(eq(schema.groups.inviteCode, parsed.data.inviteCode))
+      .limit(1);
+    if (!group) {
+      return { error: "Código de invitación inválido — revísalo o déjalo vacío" };
+    }
+    groupId = group.id;
+  }
+
   const passwordHash = await bcrypt.hash(password, 10);
   const isAdmin =
     email === (process.env.ADMIN_EMAIL ?? "").trim().toLowerCase();
@@ -66,6 +85,18 @@ export async function register(
     }
     console.error("register failed", error);
     return { error: "No se pudo crear la cuenta, intenta de nuevo" };
+  }
+
+  if (groupId) {
+    try {
+      await db
+        .insert(schema.groupMembers)
+        .values({ groupId, userId })
+        .onConflictDoNothing();
+    } catch (error) {
+      // account exists either way; the user can join again from /tabla
+      console.error("register: joining group failed", error);
+    }
   }
 
   await createSessionCookie({ sub: userId, name: displayName, admin: isAdmin });
