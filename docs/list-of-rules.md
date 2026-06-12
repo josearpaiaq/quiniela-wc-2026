@@ -1,0 +1,1 @@
+need to add sections for rules so that we can have a list of rules and their descriptions. so it would be easier to people to understand their points and positions in the table.
