@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { addGroupMember, removeGroupMember } from "@/lib/actions/groups";
+import { addGroupMembers, removeGroupMember } from "@/lib/actions/groups";
 
 export interface MemberOption {
   id: string;
@@ -17,16 +17,25 @@ export function GroupMembers({
   members: MemberOption[];
   nonMembers: MemberOption[];
 }) {
-  const [selected, setSelected] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
+  function toggle(userId: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
+      return next;
+    });
+  }
+
   function add() {
-    if (!selected) return;
+    if (selected.size === 0) return;
     startTransition(async () => {
-      const result = await addGroupMember({ groupId, userId: selected });
+      const result = await addGroupMembers({ groupId, userIds: [...selected] });
       setError(result.ok ? null : result.error);
-      if (result.ok) setSelected("");
+      if (result.ok) setSelected(new Set());
     });
   }
 
@@ -63,28 +72,41 @@ export function GroupMembers({
       )}
 
       {nonMembers.length > 0 && (
-        <div className="flex gap-2">
-          <select
-            value={selected}
-            onChange={(e) => setSelected(e.target.value)}
-            className="w-full cursor-pointer rounded-lg border border-line bg-pitch-800 px-3 py-1.5 text-xs text-ink-100 outline-none transition focus:border-volt-400"
-          >
-            <option value="">Agregar participante…</option>
-            {nonMembers.map((user) => (
-              <option key={user.id} value={user.id}>
-                {user.name}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={add}
-            disabled={pending || !selected}
-            className="shrink-0 cursor-pointer rounded-lg border border-volt-400/40 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-volt-400 transition hover:bg-volt-400/10 disabled:cursor-default disabled:opacity-50"
-          >
-            {pending ? "…" : "Agregar"}
-          </button>
-        </div>
+        <details className="group rounded-lg border border-line bg-pitch-800/50 px-3 py-2">
+          <summary className="cursor-pointer list-none text-xs font-medium text-ink-500 transition hover:text-volt-400">
+            <span className="group-open:hidden">+ Agregar participantes</span>
+            <span className="hidden group-open:inline">Selecciona a quién agregar</span>
+          </summary>
+          <div className="space-y-2 pt-2">
+            <ul className="max-h-48 space-y-1 overflow-y-auto">
+              {nonMembers.map((user) => (
+                <li key={user.id}>
+                  <label className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-xs text-ink-300 transition hover:bg-pitch-800">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(user.id)}
+                      onChange={() => toggle(user.id)}
+                      className="size-3.5 cursor-pointer accent-volt-400"
+                    />
+                    {user.name}
+                  </label>
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              onClick={add}
+              disabled={pending || selected.size === 0}
+              className="cursor-pointer rounded-lg border border-volt-400/40 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-volt-400 transition hover:bg-volt-400/10 disabled:cursor-default disabled:opacity-50"
+            >
+              {pending
+                ? "Agregando…"
+                : selected.size > 0
+                  ? `Agregar (${selected.size})`
+                  : "Agregar"}
+            </button>
+          </div>
+        </details>
       )}
 
       {error && (

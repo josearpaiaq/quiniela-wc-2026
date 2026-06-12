@@ -81,28 +81,28 @@ export async function joinGroupByCode(
   redirect(`/tabla?grupo=${group.id}`);
 }
 
-const memberInputSchema = z.object({
+const addMembersSchema = z.object({
   groupId: z.uuid(),
-  userId: z.uuid(),
+  userIds: z.array(z.uuid()).min(1).max(200),
 });
 
-export async function addGroupMember(input: unknown): Promise<SaveResult> {
+export async function addGroupMembers(input: unknown): Promise<SaveResult> {
   await requireAdmin();
-  const parsed = memberInputSchema.safeParse(input);
+  const parsed = addMembersSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Entrada inválida" };
-  const { groupId, userId } = parsed.data;
+  const { groupId, userIds } = parsed.data;
 
   const db = getDb();
   try {
     const inserted = await db
       .insert(schema.groupMembers)
-      .values({ groupId, userId })
+      .values(userIds.map((userId) => ({ groupId, userId })))
       .onConflictDoNothing()
       .returning({ groupId: schema.groupMembers.groupId });
-    if (inserted.length === 0) return { ok: false, error: "Ya es parte del grupo" };
+    if (inserted.length === 0) return { ok: false, error: "Ya son parte del grupo" };
   } catch (error) {
-    // FK violation: group or user no longer exists
-    console.error("addGroupMember failed", error);
+    // FK violation: group or some user no longer exists
+    console.error("addGroupMembers failed", error);
     return { ok: false, error: "Grupo o usuario inexistente" };
   }
 
@@ -110,6 +110,11 @@ export async function addGroupMember(input: unknown): Promise<SaveResult> {
   revalidatePath("/tabla");
   return { ok: true };
 }
+
+const memberInputSchema = z.object({
+  groupId: z.uuid(),
+  userId: z.uuid(),
+});
 
 export async function removeGroupMember(input: unknown): Promise<SaveResult> {
   await requireAdmin();
