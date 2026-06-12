@@ -3,6 +3,7 @@ import Link from "next/link";
 const TABS = [
   { href: "/admin/resultados", label: "Resultados" },
   { href: "/admin/grupos", label: "Grupos" },
+  { href: "/admin/usuarios", label: "Usuarios" },
 ] as const;
 
 export function AdminTabs({ active }: { active: (typeof TABS)[number]["href"] }) {

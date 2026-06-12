@@ -1,11 +1,13 @@
 "use server";
 
+import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "../auth/session";
 import { getDb, schema } from "../db";
 import { normalizeWinnerSide, predictionInputSchema } from "../rules";
+import { generateTempPassword } from "../temp-password";
 import type { SaveResult } from "./predictions";
 
 function revalidateAll() {
@@ -78,6 +80,36 @@ export async function setMatchOpenOverride(input: unknown): Promise<SaveResult> 
 
   revalidateAll();
   return { ok: true };
+}
+
+const resetPasswordSchema = z.object({ userId: z.uuid() });
+
+export type ResetPasswordResult =
+  | { ok: true; tempPassword: string }
+  | { ok: false; error: string };
+
+export async function resetUserPassword(input: unknown): Promise<ResetPasswordResult> {
+  const session = await requireAdmin();
+
+  const parsed = resetPasswordSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Entrada inválida" };
+  if (parsed.data.userId === session.sub) {
+    return { ok: false, error: "Cambia tu propia contraseña desde Mi cuenta" };
+  }
+
+  // shown once to the admin and never persisted in plaintext
+  const tempPassword = generateTempPassword();
+  const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+  const db = getDb();
+  const updated = await db
+    .update(schema.users)
+    .set({ passwordHash, mustChangePassword: true })
+    .where(eq(schema.users.id, parsed.data.userId))
+    .returning({ id: schema.users.id });
+  if (updated.length === 0) return { ok: false, error: "Usuario inexistente" };
+
+  return { ok: true, tempPassword };
 }
 
 const overrideSchema = z.object({
