@@ -1,20 +1,76 @@
+import { asc, eq, inArray } from "drizzle-orm";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
+import { getUserGroups, type UserGroup } from "@/lib/groups";
 import { overrideRowsToMap, rowsToScoreMap } from "@/lib/score-rows";
 import { scoreUser, type Score } from "@/lib/tournament";
+import { JoinGroupForm } from "./join-group-form";
 
 export const dynamic = "force-dynamic";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 
-export default async function TablaPage() {
+export default async function TablaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ grupo?: string | string[] }>;
+}) {
   const session = await requireUser();
   const db = getDb();
+  const { grupo } = await searchParams;
 
-  const [users, predictionRows, resultRows, overrideRows] = await Promise.all([
-    db.select().from(schema.users),
-    db.select().from(schema.predictions),
+  // admin sees every group's standings; players only the groups they joined
+  const visibleGroups: UserGroup[] = session.admin
+    ? await db
+        .select({
+          id: schema.groups.id,
+          name: schema.groups.name,
+          inviteCode: schema.groups.inviteCode,
+        })
+        .from(schema.groups)
+        .orderBy(asc(schema.groups.createdAt))
+    : await getUserGroups(session.sub);
+
+  if (visibleGroups.length === 0) {
+    return (
+      <div className="space-y-4">
+        <header>
+          <h2 className="font-display text-xl font-bold uppercase">La tabla</h2>
+        </header>
+        {session.admin ? (
+          <p className="rounded-xl border border-dashed border-line-bright px-4 py-8 text-center text-sm text-ink-500">
+            Aún no hay grupos.{" "}
+            <Link href="/admin/grupos" className="font-medium text-volt-400 hover:text-volt-300">
+              Crea el primero →
+            </Link>
+          </p>
+        ) : (
+          <JoinGroupForm variant="empty-state" />
+        )}
+      </div>
+    );
+  }
+
+  const requested = typeof grupo === "string" ? grupo : undefined;
+  // invalid/foreign ids fall back silently — lookup is within the viewer's own list
+  const selected = visibleGroups.find((g) => g.id === requested) ?? visibleGroups[0];
+
+  const memberRows = await db
+    .select({ user: schema.users })
+    .from(schema.groupMembers)
+    .innerJoin(schema.users, eq(schema.groupMembers.userId, schema.users.id))
+    .where(eq(schema.groupMembers.groupId, selected.id));
+  const users = memberRows.map((row) => row.user);
+  const memberIds = users.map((user) => user.id);
+
+  const [predictionRows, resultRows, overrideRows] = await Promise.all([
+    memberIds.length > 0
+      ? db
+          .select()
+          .from(schema.predictions)
+          .where(inArray(schema.predictions.userId, memberIds))
+      : Promise.resolve([]),
     db.select().from(schema.results),
     db.select().from(schema.knockoutOverrides),
   ]);
@@ -57,6 +113,30 @@ export default async function TablaPage() {
         </p>
       </header>
 
+      {visibleGroups.length > 1 && (
+        <nav className="flex flex-wrap gap-1 rounded-lg border border-line p-0.5 self-start">
+          {visibleGroups.map((group) => (
+            <Link
+              key={group.id}
+              href={`/tabla?grupo=${group.id}`}
+              className={`rounded-md px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition ${
+                group.id === selected.id
+                  ? "bg-volt-400 text-pitch-950"
+                  : "text-ink-500 hover:text-ink-300"
+              }`}
+            >
+              {group.name}
+            </Link>
+          ))}
+        </nav>
+      )}
+
+      {standings.length === 0 && (
+        <p className="rounded-xl border border-dashed border-line-bright px-4 py-8 text-center text-sm text-ink-500">
+          Este grupo todavía no tiene participantes.
+        </p>
+      )}
+
       <ol className="space-y-2">
         {standings.map(({ user, score, filled }, index) => {
           const isMe = user.id === session.sub;
@@ -95,9 +175,13 @@ export default async function TablaPage() {
         })}
       </ol>
 
-      <p className="px-1 text-center text-[11px] text-ink-500">
-        Toca a un participante para ver sus pronósticos — solo los de partidos ya bloqueados.
-      </p>
+      {standings.length > 0 && (
+        <p className="px-1 text-center text-[11px] text-ink-500">
+          Toca a un participante para ver sus pronósticos — solo los de partidos ya bloqueados.
+        </p>
+      )}
+
+      <JoinGroupForm variant="discreet" />
     </div>
   );
 }

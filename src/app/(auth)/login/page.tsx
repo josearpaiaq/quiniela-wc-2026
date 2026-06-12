@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { login, type AuthFormState } from "@/lib/actions/auth";
-import { FormError, SubmitButton, TextField } from "../fields";
+import { FormError, PasswordField, SubmitButton, TextField } from "@/components/form-fields";
 
 const initialState: AuthFormState = { error: null };
 
@@ -21,10 +21,9 @@ export default function LoginPage() {
           placeholder="tu@email.com"
           autoComplete="email"
         />
-        <TextField
+        <PasswordField
           label="Contraseña"
           name="password"
-          type="password"
           placeholder="••••••••"
           autoComplete="current-password"
         />
