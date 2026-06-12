@@ -9,6 +9,8 @@ export interface SessionPayload {
   sub: string; // user id
   name: string; // display name
   admin: boolean;
+  // present after an admin reset; the proxy pins the user to /cuenta until cleared
+  mustChangePassword?: boolean;
 }
 
 function secretKey(): Uint8Array {
@@ -18,7 +20,11 @@ function secretKey(): Uint8Array {
 }
 
 export async function signSession(payload: SessionPayload): Promise<string> {
-  return new SignJWT({ name: payload.name, admin: payload.admin })
+  return new SignJWT({
+    name: payload.name,
+    admin: payload.admin,
+    ...(payload.mustChangePassword ? { mustChangePassword: true } : {}),
+  })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.sub)
     .setIssuedAt()
@@ -34,6 +40,7 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
       sub: payload.sub,
       name: typeof payload.name === "string" ? payload.name : "",
       admin: payload.admin === true,
+      mustChangePassword: payload.mustChangePassword === true,
     };
   } catch {
     return null;
