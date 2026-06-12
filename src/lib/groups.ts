@@ -46,3 +46,20 @@ export async function getUserGroups(userId: string): Promise<UserGroup[]> {
     .where(eq(schema.groupMembers.userId, userId))
     .orderBy(asc(schema.groupMembers.joinedAt));
 }
+
+/** Groups a viewer may browse: admins see every group, players only the ones they joined. */
+export async function getVisibleGroups(viewer: {
+  sub: string;
+  admin: boolean;
+}): Promise<UserGroup[]> {
+  if (!viewer.admin) return getUserGroups(viewer.sub);
+  const db = getDb();
+  return db
+    .select({
+      id: schema.groups.id,
+      name: schema.groups.name,
+      inviteCode: schema.groups.inviteCode,
+    })
+    .from(schema.groups)
+    .orderBy(asc(schema.groups.createdAt));
+}

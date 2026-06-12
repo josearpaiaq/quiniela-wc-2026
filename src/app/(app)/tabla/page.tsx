@@ -1,9 +1,10 @@
-import { asc, eq, inArray } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import Link from "next/link";
 import { ArrowRight, Medal } from "lucide-react";
+import { GroupTabs } from "@/components/group-tabs";
 import { requireUser } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
-import { getUserGroups, type UserGroup } from "@/lib/groups";
+import { getVisibleGroups } from "@/lib/groups";
 import { overrideRowsToMap, rowsToScoreMap } from "@/lib/score-rows";
 import { scoreUser, type Score } from "@/lib/tournament";
 import { JoinGroupForm } from "./join-group-form";
@@ -22,16 +23,7 @@ export default async function TablaPage({
   const { grupo } = await searchParams;
 
   // admin sees every group's standings; players only the groups they joined
-  const visibleGroups: UserGroup[] = session.admin
-    ? await db
-        .select({
-          id: schema.groups.id,
-          name: schema.groups.name,
-          inviteCode: schema.groups.inviteCode,
-        })
-        .from(schema.groups)
-        .orderBy(asc(schema.groups.createdAt))
-    : await getUserGroups(session.sub);
+  const visibleGroups = await getVisibleGroups(session);
 
   if (visibleGroups.length === 0) {
     return (
@@ -117,23 +109,11 @@ export default async function TablaPage({
         </p>
       </header>
 
-      {visibleGroups.length > 1 && (
-        <nav className="flex flex-wrap gap-1 rounded-lg border border-line p-0.5 self-start">
-          {visibleGroups.map((group) => (
-            <Link
-              key={group.id}
-              href={`/tabla?grupo=${group.id}`}
-              className={`rounded-md px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition ${
-                group.id === selected.id
-                  ? "bg-volt-400 text-pitch-950"
-                  : "text-ink-500 hover:text-ink-300"
-              }`}
-            >
-              {group.name}
-            </Link>
-          ))}
-        </nav>
-      )}
+      <GroupTabs
+        groups={visibleGroups}
+        selectedId={selected.id}
+        hrefFor={(groupId) => `/tabla?grupo=${groupId}`}
+      />
 
       {standings.length === 0 && (
         <p className="rounded-xl border border-dashed border-line-bright px-4 py-8 text-center text-sm text-ink-500">
