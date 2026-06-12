@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { Trophy } from "lucide-react";
 import { MATCHES, type GroupLetter, type Phase } from "@/lib/db/seed-data";
 import {
   PHASES,
@@ -23,6 +24,18 @@ import { MatchCard, type SaveStatus } from "@/components/match-card";
 type PhaseKey = Phase | "finals";
 
 const GROUP_MATCH_IDS = MATCHES.filter((m) => m.phase === "group").map((m) => m.id);
+
+function matchTag(match: (typeof MATCHES)[number]): React.ReactNode {
+  if (match.phase === "third") return "3er puesto";
+  if (match.phase === "final") {
+    return (
+      <span className="inline-flex items-center gap-1">
+        <Trophy aria-hidden className="h-3 w-3 text-gold-400" /> Final
+      </span>
+    );
+  }
+  return `P${match.id}`;
+}
 
 export function QuinielaClient({
   initialPredictions,
@@ -114,7 +127,7 @@ export function QuinielaClient({
     scheduleSave(matchId, next, phase);
   }
 
-  const renderCard = (match: (typeof MATCHES)[number], tag: string) => {
+  const renderCard = (match: (typeof MATCHES)[number], tag: React.ReactNode) => {
     const slot = match.phase === "group" ? null : bracket.get(match.id);
     const homeCode = match.phase === "group" ? match.home! : (slot?.home ?? null);
     const awayCode = match.phase === "group" ? match.away! : (slot?.away ?? null);
@@ -210,12 +223,7 @@ export function QuinielaClient({
             </span>
           </summary>
           <div className="mt-3 space-y-3">
-            {todayMatches.map((m) =>
-              renderCard(
-                m,
-                m.phase === "third" ? "3er puesto" : m.phase === "final" ? "🏆 Final" : `P${m.id}`,
-              ),
-            )}
+            {todayMatches.map((m) => renderCard(m, matchTag(m)))}
           </div>
         </details>
       )}
@@ -255,7 +263,7 @@ function GroupsPanel({
   onGroup: (g: GroupLetter) => void;
   predictions: ScoreRecord;
   scoreMap: Map<number, { home: number; away: number }>;
-  renderCard: (match: (typeof MATCHES)[number], tag: string) => React.ReactNode;
+  renderCard: (match: (typeof MATCHES)[number], tag: React.ReactNode) => React.ReactNode;
 }) {
   const standings = useMemo(() => computeGroupStandings(group, scoreMap), [group, scoreMap]);
   const matches = MATCHES.filter((m) => m.phase === "group" && m.group === group).sort(
@@ -350,7 +358,7 @@ function KnockoutPanel({
   renderCard,
 }: {
   tab: PhaseKey;
-  renderCard: (match: (typeof MATCHES)[number], tag: string) => React.ReactNode;
+  renderCard: (match: (typeof MATCHES)[number], tag: React.ReactNode) => React.ReactNode;
 }) {
   const matches = MATCHES.filter((m) =>
     tab === "finals" ? m.phase === "third" || m.phase === "final" : m.phase === tab,
@@ -358,9 +366,7 @@ function KnockoutPanel({
 
   return (
     <div className="space-y-3">
-      {matches.map((m) =>
-        renderCard(m, m.phase === "third" ? "3er puesto" : m.phase === "final" ? "🏆 Final" : `P${m.id}`),
-      )}
+      {matches.map((m) => renderCard(m, matchTag(m)))}
       <p className="px-1 text-center text-[11px] text-ink-500">
         Los cruces salen de tus pronósticos de grupos. Si cambias un grupo (aún abierto), los
         equipos se actualizan pero tus marcadores de llaves se conservan.

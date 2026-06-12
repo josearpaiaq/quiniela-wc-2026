@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Plus, X } from "lucide-react";
 import { addGroupMembers, removeGroupMember } from "@/lib/actions/groups";
 
 export interface MemberOption {
@@ -62,9 +63,9 @@ export function GroupMembers({
                 onClick={() => remove(member)}
                 disabled={pending}
                 aria-label={`Quitar a ${member.name}`}
-                className="cursor-pointer rounded-full px-1 text-ink-500 transition hover:bg-danger-400/15 hover:text-danger-400 disabled:opacity-60"
+                className="cursor-pointer rounded-full p-1 text-ink-500 transition hover:bg-danger-400/15 hover:text-danger-400 disabled:opacity-60"
               >
-                ✕
+                <X aria-hidden className="h-3 w-3" />
               </button>
             </li>
           ))}
@@ -74,7 +75,9 @@ export function GroupMembers({
       {nonMembers.length > 0 && (
         <details className="group rounded-lg border border-line bg-pitch-800/50 px-3 py-2">
           <summary className="cursor-pointer list-none text-xs font-medium text-ink-500 transition hover:text-volt-400">
-            <span className="group-open:hidden">+ Agregar participantes</span>
+            <span className="inline-flex items-center gap-1 group-open:hidden">
+              <Plus aria-hidden className="h-3.5 w-3.5" /> Agregar participantes
+            </span>
             <span className="hidden group-open:inline">Selecciona a quién agregar</span>
           </summary>
           <div className="space-y-2 pt-2">

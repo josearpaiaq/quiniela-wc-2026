@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Medal, Trophy } from "lucide-react";
 import { MATCHES } from "@/lib/db/seed-data";
 import { TEAM_BY_CODE, type ScoreRecord } from "@/lib/dto";
 
@@ -163,9 +164,7 @@ export function BracketView({
 
       {/* champion banner */}
       <div className="flex items-center justify-center gap-3 rounded-xl border border-gold-400/40 bg-gradient-to-r from-pitch-900 via-pitch-800 to-pitch-900 px-4 py-3">
-        <span aria-hidden className="text-2xl">
-          🏆
-        </span>
+        <Trophy aria-hidden className="h-7 w-7 text-gold-400" />
         {champion ? (
           <p className="font-display text-lg font-extrabold uppercase">
             <span aria-hidden className="mr-2">{champion.flag}</span>
@@ -208,7 +207,7 @@ export function BracketView({
 
       {/* third place */}
       <div className="flex items-center gap-3 rounded-xl border border-line bg-pitch-900 px-4 py-3">
-        <span aria-hidden>🥉</span>
+        <Medal aria-hidden className="h-5 w-5 shrink-0 text-[#cd7f32]" />
         <div className="text-sm">
           <p className="text-[10px] uppercase tracking-wider text-ink-500">Tercer puesto</p>
           {third?.home && third.away ? (

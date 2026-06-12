@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 const inputClassName =
   "w-full rounded-lg border border-line bg-pitch-800 px-3.5 py-2.5 text-ink-100 placeholder:text-ink-500/60 outline-none transition focus:border-volt-400 focus:ring-2 focus:ring-volt-400/25";
@@ -76,48 +77,14 @@ export function PasswordField({
           aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
           className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-ink-500 transition hover:text-ink-100"
         >
-          {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+          {showPassword ? (
+            <EyeOff aria-hidden className="h-5 w-5" />
+          ) : (
+            <Eye aria-hidden className="h-5 w-5" />
+          )}
         </button>
       </div>
     </label>
-  );
-}
-
-function EyeIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-5 w-5"
-      aria-hidden="true"
-    >
-      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-}
-
-function EyeOffIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-5 w-5"
-      aria-hidden="true"
-    >
-      <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
-      <path d="M10.73 5.08A10.4 10.4 0 0 1 12 5c6.5 0 10 7 10 7a13.2 13.2 0 0 1-1.67 2.68" />
-      <path d="M6.61 6.61C4.62 7.97 3.06 9.94 2 12c0 0 3.5 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
-      <line x1="2" y1="2" x2="22" y2="22" />
-    </svg>
   );
 }
 

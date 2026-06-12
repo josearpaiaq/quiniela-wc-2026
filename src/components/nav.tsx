@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ListChecks, Mic, Network, Trophy } from "lucide-react";
 
 const LINKS = [
-  { href: "/quiniela", label: "Quiniela", icon: "⚽" },
-  { href: "/bracket", label: "Bracket", icon: "🗺️" },
-  { href: "/tabla", label: "Tabla", icon: "🏆" },
+  { href: "/quiniela", label: "Quiniela", icon: ListChecks },
+  { href: "/bracket", label: "Bracket", icon: Network },
+  { href: "/tabla", label: "Tabla", icon: Trophy },
 ];
 
-const ADMIN_LINK = { href: "/admin/resultados", label: "Admin", icon: "🎙️" };
+const ADMIN_LINK = { href: "/admin/resultados", label: "Admin", icon: Mic };
 
 export function NavLinks({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
@@ -30,9 +31,7 @@ export function NavLinks({ isAdmin }: { isAdmin: boolean }) {
                     : "text-ink-500 hover:text-ink-300"
                 }`}
               >
-                <span aria-hidden className="text-base leading-none md:text-sm">
-                  {link.icon}
-                </span>
+                <link.icon aria-hidden className="h-5 w-5 md:h-4 md:w-4" />
                 {link.label}
               </Link>
             </li>

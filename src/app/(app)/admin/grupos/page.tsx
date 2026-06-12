@@ -1,5 +1,6 @@
 import { asc, eq } from "drizzle-orm";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { requireAdmin } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
 import { AdminTabs } from "../admin-tabs";
@@ -94,9 +95,9 @@ export default async function AdminGruposPage() {
             />
             <Link
               href={`/tabla?grupo=${group.id}`}
-              className="inline-block text-xs font-medium text-volt-400 hover:text-volt-300"
+              className="inline-flex items-center gap-1 text-xs font-medium text-volt-400 hover:text-volt-300"
             >
-              Ver tabla →
+              Ver tabla <ArrowRight aria-hidden className="h-3.5 w-3.5" />
             </Link>
           </section>
         ))}
