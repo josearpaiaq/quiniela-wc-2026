@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Plus, Ticket } from "lucide-react";
 import { joinGroupByCode, type GroupFormState } from "@/lib/actions/groups";
 
 const initialState: GroupFormState = { error: null };
@@ -41,9 +42,7 @@ export function JoinGroupForm({ variant }: { variant: "empty-state" | "discreet"
   if (variant === "empty-state") {
     return (
       <section className="space-y-4 rounded-2xl border border-line bg-pitch-900 p-6 text-center">
-        <p className="text-3xl" aria-hidden>
-          🎟️
-        </p>
+        <Ticket aria-hidden className="mx-auto h-9 w-9 text-volt-400" />
         <div className="space-y-1">
           <h3 className="font-display text-lg font-bold">Aún no estás en ningún grupo</h3>
           <p className="text-sm text-ink-500">
@@ -59,7 +58,9 @@ export function JoinGroupForm({ variant }: { variant: "empty-state" | "discreet"
   return (
     <details className="group rounded-xl border border-line bg-pitch-900 px-4 py-3">
       <summary className="cursor-pointer list-none text-xs font-medium text-ink-500 transition hover:text-volt-400">
-        <span className="group-open:hidden">+ Unirse a otro grupo</span>
+        <span className="inline-flex items-center gap-1 group-open:hidden">
+          <Plus aria-hidden className="h-3.5 w-3.5" /> Unirse a otro grupo
+        </span>
         <span className="hidden group-open:inline">Ingresa el código del grupo</span>
       </summary>
       <div className="pt-3">

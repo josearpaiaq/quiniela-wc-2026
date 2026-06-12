@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowRight, Check, Lock } from "lucide-react";
 import { ScoreStepper } from "./score-stepper";
 import { TeamLabel } from "./team-label";
 import { TEAM_BY_CODE, type ScoreDTO } from "@/lib/dto";
@@ -29,7 +30,7 @@ export function MatchCard({
   kickoffAt: string;
   venue: string;
   /** small leading label, e.g. "P12" or "3er puesto" */
-  tag: string;
+  tag: React.ReactNode;
   homeCode: string | null;
   awayCode: string | null;
   score: ScoreDTO | undefined;
@@ -63,9 +64,13 @@ export function MatchCard({
         </span>
         <span className="font-mono">
           {saveStatus === "saving" && <span className="text-ink-500">···</span>}
-          {saveStatus === "saved" && <span className="text-volt-400">✓ guardado</span>}
+          {saveStatus === "saved" && (
+            <span className="inline-flex items-center gap-1 text-volt-400">
+              <Check aria-hidden className="h-3 w-3" /> guardado
+            </span>
+          )}
           {saveStatus === "error" && <span className="text-danger-400">no guardado</span>}
-          {!open && <span aria-label="bloqueado">🔒</span>}
+          {!open && <Lock aria-label="bloqueado" className="h-3.5 w-3.5" />}
         </span>
       </header>
 
@@ -139,8 +144,11 @@ export function MatchCard({
             </span>
           )}
           {detailsHref && (
-            <Link href={detailsHref} className="text-ink-500 underline-offset-2 hover:text-volt-400 hover:underline">
-              Ver pronósticos de todos →
+            <Link
+              href={detailsHref}
+              className="inline-flex items-center gap-1 text-ink-500 underline-offset-2 hover:text-volt-400 hover:underline"
+            >
+              Ver pronósticos de todos <ArrowRight aria-hidden className="h-3.5 w-3.5" />
             </Link>
           )}
         </footer>

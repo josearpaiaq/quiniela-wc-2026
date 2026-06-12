@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Check, PartyPopper } from "lucide-react";
 import { ScoreStepper } from "@/components/score-stepper";
 import { TeamLabel } from "@/components/team-label";
 import {
@@ -76,9 +77,14 @@ export function AdminClient({
 
       {filtered.length === 0 && (
         <p className="rounded-xl border border-dashed border-line-bright px-4 py-8 text-center text-sm text-ink-500">
-          {filter === "pending"
-            ? "No hay partidos jugados sin resultado. 🎉"
-            : "Nada por aquí todavía."}
+          {filter === "pending" ? (
+            <span className="inline-flex items-center gap-1.5">
+              No hay partidos jugados sin resultado.
+              <PartyPopper aria-hidden className="h-4 w-4 text-volt-400" />
+            </span>
+          ) : (
+            "Nada por aquí todavía."
+          )}
         </p>
       )}
 
@@ -225,7 +231,11 @@ function AdminRow({
 
       <footer className="mt-3 flex items-center justify-between gap-2">
         <span className="text-xs">
-          {status === "saved" && <span className="text-volt-400">✓ resultado guardado</span>}
+          {status === "saved" && (
+            <span className="inline-flex items-center gap-1 text-volt-400">
+              <Check aria-hidden className="h-3 w-3" /> resultado guardado
+            </span>
+          )}
           {status === "error" && <span className="text-danger-400">{error}</span>}
         </span>
         <button

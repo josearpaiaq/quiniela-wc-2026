@@ -1,10 +1,12 @@
 "use client";
 
+import { TriangleAlert } from "lucide-react";
+
 export default function AppError({ reset }: { error: Error; reset: () => void }) {
   return (
     <div className="grid min-h-[50vh] place-items-center px-6 text-center">
       <div>
-        <p className="font-display text-5xl font-extrabold text-ink-500">⚠️</p>
+        <TriangleAlert aria-hidden className="mx-auto h-12 w-12 text-ink-500" />
         <h2 className="mt-3 font-display text-xl font-bold">Se cayó el sistema VAR</h2>
         <p className="mt-2 text-sm text-ink-500">
           No pudimos cargar los datos. Revisa tu conexión e intenta de nuevo.

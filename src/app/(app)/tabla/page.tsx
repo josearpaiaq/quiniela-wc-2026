@@ -1,5 +1,6 @@
 import { asc, eq, inArray } from "drizzle-orm";
 import Link from "next/link";
+import { ArrowRight, Medal } from "lucide-react";
 import { requireUser } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
 import { getUserGroups, type UserGroup } from "@/lib/groups";
@@ -9,7 +10,7 @@ import { JoinGroupForm } from "./join-group-form";
 
 export const dynamic = "force-dynamic";
 
-const MEDALS = ["🥇", "🥈", "🥉"];
+const MEDAL_COLORS = ["text-gold-400", "text-ink-300", "text-[#cd7f32]"];
 
 export default async function TablaPage({
   searchParams,
@@ -41,8 +42,11 @@ export default async function TablaPage({
         {session.admin ? (
           <p className="rounded-xl border border-dashed border-line-bright px-4 py-8 text-center text-sm text-ink-500">
             Aún no hay grupos.{" "}
-            <Link href="/admin/grupos" className="font-medium text-volt-400 hover:text-volt-300">
-              Crea el primero →
+            <Link
+              href="/admin/grupos"
+              className="inline-flex items-center gap-1 font-medium text-volt-400 hover:text-volt-300"
+            >
+              Crea el primero <ArrowRight aria-hidden className="h-3.5 w-3.5" />
             </Link>
           </p>
         ) : (
@@ -140,7 +144,7 @@ export default async function TablaPage({
       <ol className="space-y-2">
         {standings.map(({ user, score, filled }, index) => {
           const isMe = user.id === session.sub;
-          const medal = MEDALS[index];
+          const medalColor = MEDAL_COLORS[index];
           return (
             <li key={user.id}>
               <Link
@@ -149,8 +153,12 @@ export default async function TablaPage({
                   isMe ? "border-volt-400/50 bg-volt-400/5" : "border-line bg-pitch-900"
                 } ${index === 0 ? "shadow-[0_0_30px_rgba(255,198,63,0.08)]" : ""}`}
               >
-                <span className="w-8 text-center font-display text-lg font-extrabold">
-                  {medal ?? <span className="text-ink-500">{index + 1}</span>}
+                <span className="flex w-8 justify-center font-display text-lg font-extrabold">
+                  {medalColor ? (
+                    <Medal aria-label={`puesto ${index + 1}`} className={`h-5 w-5 ${medalColor}`} />
+                  ) : (
+                    <span className="text-ink-500">{index + 1}</span>
+                  )}
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium">

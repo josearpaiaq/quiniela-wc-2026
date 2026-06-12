@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { TeamLabel } from "@/components/team-label";
 import { requireUser } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
@@ -88,8 +89,11 @@ export default async function QuinielaAjenaPage({
   return (
     <div className="space-y-5">
       <div>
-        <Link href="/tabla" className="text-xs text-ink-500 hover:text-volt-400">
-          ← Volver a la tabla
+        <Link
+          href="/tabla"
+          className="inline-flex items-center gap-1 text-xs text-ink-500 hover:text-volt-400"
+        >
+          <ArrowLeft aria-hidden className="h-3.5 w-3.5" /> Volver a la tabla
         </Link>
         <div className="mt-2 flex items-end justify-between">
           <div>
