@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ListChecks, Mic, Network, Trophy } from "lucide-react";
+import { ListChecks, Database, Network, Trophy } from "lucide-react";
 
 const LINKS = [
   { href: "/quiniela", label: "Quiniela", icon: ListChecks },
@@ -10,7 +10,7 @@ const LINKS = [
   { href: "/tabla", label: "Tabla", icon: Trophy },
 ];
 
-const ADMIN_LINK = { href: "/admin/resultados", label: "Admin", icon: Mic };
+const ADMIN_LINK = { href: "/admin/resultados", label: "Admin", icon: Database };
 
 export function NavLinks({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
