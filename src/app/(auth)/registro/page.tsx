@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { register, type AuthFormState } from "@/lib/actions/auth";
-import { FormError, SubmitButton, TextField } from "../fields";
+import { FormError, PasswordField, SubmitButton, TextField } from "@/components/form-fields";
 
 const initialState: AuthFormState = { error: null };
 
@@ -15,11 +15,11 @@ export default function RegistroPage() {
       <h2 className="mb-5 font-display text-xl font-bold">Ficha tu lugar</h2>
       <form action={formAction} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
-          <TextField label="Nombre" name="firstName" placeholder="José" autoComplete="given-name" />
+          <TextField label="Nombre" name="firstName" placeholder="Pablo" autoComplete="given-name" />
           <TextField
             label="Apellido"
             name="lastName"
-            placeholder="Arpaia"
+            placeholder="Perez"
             autoComplete="family-name"
           />
         </div>
@@ -36,12 +36,17 @@ export default function RegistroPage() {
           placeholder="tu@email.com"
           autoComplete="email"
         />
-        <TextField
+        <PasswordField
           label="Contraseña (mínimo 8)"
           name="password"
-          type="password"
           placeholder="••••••••"
           autoComplete="new-password"
+        />
+        <TextField
+          label="Código de invitación (opcional)"
+          name="inviteCode"
+          placeholder="AB3XYZ"
+          required={false}
         />
         <FormError message={state.error} />
         <SubmitButton pending={pending} pendingText="Creando cuenta…">
