@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { logout } from "@/lib/actions/auth";
 import { requireUser } from "@/lib/auth/session";
 import { NavLinks } from "@/components/nav";
@@ -21,9 +22,12 @@ export default async function AppLayout({
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="max-w-[10rem] truncate text-xs text-ink-500">
+            <Link
+              href="/cuenta"
+              className="max-w-[10rem] truncate text-xs text-ink-500 transition hover:text-ink-100"
+            >
               {session.name}
-            </span>
+            </Link>
             <form action={logout}>
               <button
                 type="submit"

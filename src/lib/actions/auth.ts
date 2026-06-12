@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getDb, schema } from "../db";
-import { clearSessionCookie, createSessionCookie } from "../auth/session";
+import { clearSessionCookie, createSessionCookie, requireUser } from "../auth/session";
 import { inviteCodeSchema } from "../groups";
 
 export interface AuthFormState {
@@ -128,8 +128,60 @@ export async function login(
     sub: user.id,
     name: user.displayName,
     admin: user.isAdmin,
+    mustChangePassword: user.mustChangePassword,
   });
-  redirect("/quiniela");
+  redirect(user.mustChangePassword ? "/cuenta" : "/quiniela");
+}
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Ingresa tu contraseña actual"),
+  newPassword: z
+    .string()
+    .min(8, "La nueva contraseña debe tener al menos 8 caracteres"),
+});
+
+export interface ChangePasswordState {
+  error: string | null;
+  success: boolean;
+}
+
+export async function changePassword(
+  _prev: ChangePasswordState,
+  formData: FormData,
+): Promise<ChangePasswordState> {
+  const session = await requireUser();
+
+  const parsed = changePasswordSchema.safeParse({
+    currentPassword: formData.get("currentPassword"),
+    newPassword: formData.get("newPassword"),
+  });
+  if (!parsed.success) return { error: firstIssue(parsed.error), success: false };
+
+  const db = getDb();
+  const [user] = await db
+    .select()
+    .from(schema.users)
+    .where(eq(schema.users.id, session.sub))
+    .limit(1);
+  if (!user) return { error: "Usuario no encontrado", success: false };
+
+  const valid = await bcrypt.compare(parsed.data.currentPassword, user.passwordHash);
+  if (!valid) return { error: "La contraseña actual es incorrecta", success: false };
+
+  const passwordHash = await bcrypt.hash(parsed.data.newPassword, 10);
+  await db
+    .update(schema.users)
+    .set({ passwordHash, mustChangePassword: false })
+    .where(eq(schema.users.id, user.id));
+
+  // reissue the session without the forced-change claim
+  await createSessionCookie({
+    sub: user.id,
+    name: user.displayName,
+    admin: user.isAdmin,
+  });
+
+  return { error: null, success: true };
 }
 
 export async function logout(): Promise<void> {
