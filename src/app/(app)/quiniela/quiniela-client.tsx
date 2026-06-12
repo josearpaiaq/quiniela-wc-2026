@@ -54,6 +54,7 @@ export function QuinielaClient({
   const overrides = useMemo(() => new Set(openOverrides), [openOverrides]);
 
   const scoreMap = useMemo(() => toScoreMap(predictions), [predictions]);
+  const realScoreMap = useMemo(() => toScoreMap(results), [results]);
   const bracket = useMemo(() => buildBracket(scoreMap), [scoreMap]);
   const bracketReady = useMemo(() => allGroupsComplete(scoreMap), [scoreMap]);
 
@@ -234,6 +235,7 @@ export function QuinielaClient({
           onGroup={setGroup}
           predictions={predictions}
           scoreMap={scoreMap}
+          realScoreMap={realScoreMap}
           renderCard={renderCard}
         />
       ) : bracketReady ? (
@@ -257,18 +259,23 @@ function GroupsPanel({
   onGroup,
   predictions,
   scoreMap,
+  realScoreMap,
   renderCard,
 }: {
   group: GroupLetter;
   onGroup: (g: GroupLetter) => void;
   predictions: ScoreRecord;
   scoreMap: Map<number, { home: number; away: number }>;
+  realScoreMap: Map<number, { home: number; away: number }>;
   renderCard: (match: (typeof MATCHES)[number], tag: React.ReactNode) => React.ReactNode;
 }) {
-  const standings = useMemo(() => computeGroupStandings(group, scoreMap), [group, scoreMap]);
+  const [view, setView] = useState<"mine" | "real">("mine");
+  const activeMap = view === "mine" ? scoreMap : realScoreMap;
+  const standings = useMemo(() => computeGroupStandings(group, activeMap), [group, activeMap]);
   const matches = MATCHES.filter((m) => m.phase === "group" && m.group === group).sort(
     (a, b) => Date.parse(a.kickoffAt) - Date.parse(b.kickoffAt),
   );
+  const hasRealResults = matches.some((m) => realScoreMap.has(m.id));
 
   return (
     <div className="space-y-4">
@@ -303,12 +310,37 @@ function GroupsPanel({
         </div>
       </div>
 
+      {/* standings source toggle */}
+      <div className="flex justify-end">
+        <div className="flex rounded-lg border border-line p-0.5">
+          {(
+            [
+              { key: "mine", label: "Tu quiniela" },
+              { key: "real", label: "Real" },
+            ] as const
+          ).map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setView(key)}
+              className={`rounded-md px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition ${
+                view === key ? "bg-volt-400 text-pitch-950" : "text-ink-500 hover:text-ink-300"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* live standings */}
       <div className="overflow-hidden rounded-xl border border-line bg-pitch-900">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-line text-[10px] uppercase tracking-wider text-ink-500">
-              <th className="px-3 py-2 text-left font-medium">Grupo {group} · según tu quiniela</th>
+              <th className="px-3 py-2 text-left font-medium">
+                Grupo {group} · {view === "mine" ? "según tu quiniela" : "resultados reales"}
+              </th>
               <th className="px-2 py-2 text-center font-medium">PJ</th>
               <th className="px-2 py-2 text-center font-medium">DG</th>
               <th className="px-3 py-2 text-center font-medium">Pts</th>
@@ -344,7 +376,13 @@ function GroupsPanel({
           </tbody>
         </table>
         <p className="border-t border-line/60 px-3 py-1.5 text-[10px] text-ink-500">
-          <span className="text-volt-400">1º–2º clasifican</span> · <span className="text-gold-400">3º puede clasificar entre los 8 mejores</span>
+          {view === "real" && !hasRealResults ? (
+            <span className="italic">Aún no hay resultados reales en este grupo</span>
+          ) : (
+            <>
+              <span className="text-volt-400">1º–2º clasifican</span> · <span className="text-gold-400">3º puede clasificar entre los 8 mejores</span>
+            </>
+          )}
         </p>
       </div>
 
