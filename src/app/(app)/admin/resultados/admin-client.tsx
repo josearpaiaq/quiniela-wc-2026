@@ -20,6 +20,8 @@ export type AdminOverrideRecord = Record<
 
 type Filter = "pending" | "done" | "all";
 
+const LIVE_WINDOW_MS = 2 * 60 * 60 * 1000;
+
 export function AdminClient({
   results: initialResults,
   realSlots,
@@ -35,19 +37,55 @@ export function AdminClient({
   const [open, setOpen] = useState(() => new Set(openOverrides));
   const [filter, setFilter] = useState<Filter>("pending");
 
-  const sorted = useMemo(
+  // captured once per mount; "pending" filter is advisory UI, not authority
+  const [now] = useState(() => Date.now());
+
+  const allSorted = useMemo(
     () => [...MATCHES].sort((a, b) => Date.parse(a.kickoffAt) - Date.parse(b.kickoffAt)),
     [],
   );
 
-  // captured once per mount; "pending" filter is advisory UI, not authority
-  const [now] = useState(() => Date.now());
-  const filtered = sorted.filter((m) => {
-    const hasResult = results[m.id] !== undefined;
-    if (filter === "pending") return !hasResult && Date.parse(m.kickoffAt) <= now;
-    if (filter === "done") return hasResult;
-    return true;
-  });
+  const grouped = useMemo(() => {
+    const filtered = allSorted.filter((m) => {
+      const hasResult = results[m.id] !== undefined;
+      if (filter === "pending") return !hasResult && Date.parse(m.kickoffAt) <= now;
+      if (filter === "done") return hasResult;
+      return true;
+    });
+
+    const byDay = new Map<string, (typeof MATCHES)[number][]>();
+    for (const m of filtered) {
+      const d = new Date(m.kickoffAt);
+      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      if (!byDay.has(key)) byDay.set(key, []);
+      byDay.get(key)!.push(m);
+    }
+
+    return [...byDay.entries()]
+      .map(([key, matches]) => {
+        const date = new Date(matches[0].kickoffAt);
+        const raw = new Intl.DateTimeFormat("es", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+        }).format(date);
+        const label = raw.charAt(0).toUpperCase() + raw.slice(1);
+        const dayMatches = [...matches].sort((a, b) => {
+          const aElapsed = now - Date.parse(a.kickoffAt);
+          const bElapsed = now - Date.parse(b.kickoffAt);
+          const aLive =
+            aElapsed >= 0 && aElapsed < LIVE_WINDOW_MS && results[a.id] === undefined;
+          const bLive =
+            bElapsed >= 0 && bElapsed < LIVE_WINDOW_MS && results[b.id] === undefined;
+          if (aLive !== bLive) return aLive ? -1 : 1;
+          return Date.parse(a.kickoffAt) - Date.parse(b.kickoffAt);
+        });
+        return { key, label, matches: dayMatches, date };
+      })
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+  }, [allSorted, filter, results, now]);
+
+  const totalMatches = grouped.reduce((acc, g) => acc + g.matches.length, 0);
 
   return (
     <div className="space-y-4">
@@ -75,7 +113,7 @@ export function AdminClient({
         </div>
       </header>
 
-      {filtered.length === 0 && (
+      {totalMatches === 0 && (
         <p className="rounded-xl border border-dashed border-line-bright px-4 py-8 text-center text-sm text-ink-500">
           {filter === "pending" ? (
             <span className="inline-flex items-center gap-1.5">
@@ -88,29 +126,39 @@ export function AdminClient({
         </p>
       )}
 
-      <div className="space-y-3">
-        {filtered.map((match) => (
-          <AdminRow
-            key={match.id}
-            match={match}
-            slot={
-              match.phase === "group"
-                ? { home: match.home!, away: match.away! }
-                : (realSlots[match.id] ?? { home: null, away: null })
-            }
-            result={results[match.id]}
-            isOpen={open.has(match.id)}
-            override={knockoutOverrides[match.id]}
-            onSaved={(score) => setResults((r) => ({ ...r, [match.id]: score }))}
-            onToggleOpen={(value) =>
-              setOpen((prev) => {
-                const next = new Set(prev);
-                if (value) next.add(match.id);
-                else next.delete(match.id);
-                return next;
-              })
-            }
-          />
+      <div className="space-y-6">
+        {grouped.map(({ key, label, matches }) => (
+          <section key={key}>
+            <h3 className="mb-3 border-b border-line pb-2 text-[11px] font-medium uppercase tracking-wider text-ink-500">
+              {label}
+            </h3>
+            <div className="space-y-3">
+              {matches.map((match) => (
+                <AdminRow
+                  key={match.id}
+                  match={match}
+                  now={now}
+                  slot={
+                    match.phase === "group"
+                      ? { home: match.home!, away: match.away! }
+                      : (realSlots[match.id] ?? { home: null, away: null })
+                  }
+                  result={results[match.id]}
+                  isOpen={open.has(match.id)}
+                  override={knockoutOverrides[match.id]}
+                  onSaved={(score) => setResults((r) => ({ ...r, [match.id]: score }))}
+                  onToggleOpen={(value) =>
+                    setOpen((prev) => {
+                      const next = new Set(prev);
+                      if (value) next.add(match.id);
+                      else next.delete(match.id);
+                      return next;
+                    })
+                  }
+                />
+              ))}
+            </div>
+          </section>
         ))}
       </div>
     </div>
@@ -119,6 +167,7 @@ export function AdminClient({
 
 function AdminRow({
   match,
+  now,
   slot,
   result,
   isOpen,
@@ -127,6 +176,7 @@ function AdminRow({
   onToggleOpen,
 }: {
   match: (typeof MATCHES)[number];
+  now: number;
   slot: { home: string | null; away: string | null };
   result: ScoreDTO | undefined;
   isOpen: boolean;
@@ -134,6 +184,8 @@ function AdminRow({
   onSaved: (score: ScoreDTO) => void;
   onToggleOpen: (open: boolean) => void;
 }) {
+  const elapsed = now - Date.parse(match.kickoffAt);
+  const live = !result && elapsed >= 0 && elapsed < LIVE_WINDOW_MS;
   const [home, setHome] = useState<number | null>(result?.home ?? null);
   const [away, setAway] = useState<number | null>(result?.away ?? null);
   const [winner, setWinner] = useState<"home" | "away" | null>(result?.winnerSide ?? null);
@@ -169,14 +221,22 @@ function AdminRow({
   }
 
   return (
-    <article className="rounded-xl border border-line bg-pitch-900 p-3.5">
+    <article
+      className={`rounded-xl border bg-pitch-900 p-3.5 ${live ? "border-danger-400/40" : "border-line"}`}
+    >
       <header className="mb-2.5 flex items-center justify-between gap-2 text-[11px] text-ink-500">
-        <span className="flex items-center gap-2">
+        <span className="flex flex-wrap items-center gap-2">
           <span className="rounded bg-pitch-700 px-1.5 py-0.5 font-mono font-semibold text-ink-300">
             P{match.id}
           </span>
           <time suppressHydrationWarning>{formatKickoff(match.kickoffAt)}</time>
           <span className="hidden sm:inline">· {shortVenue(match.venue)}</span>
+          {live && (
+            <span className="flex items-center gap-1 rounded-full bg-danger-400/15 px-1.5 py-0.5 font-bold uppercase tracking-wider text-danger-400">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-danger-400" />
+              En vivo
+            </span>
+          )}
         </span>
         <label className="flex cursor-pointer items-center gap-1.5">
           <span className={isOpen ? "text-gold-400" : ""}>

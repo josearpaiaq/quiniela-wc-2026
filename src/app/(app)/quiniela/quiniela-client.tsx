@@ -73,13 +73,6 @@ export function QuinielaClient({
     () => true,
     () => false,
   );
-  const todayMatches = useMemo(
-    () =>
-      MATCHES.filter((m) => isSameLocalDay(new Date(m.kickoffAt), new Date(now))).sort(
-        (a, b) => Date.parse(a.kickoffAt) - Date.parse(b.kickoffAt),
-      ),
-    [now],
-  );
   const isOpen = (matchId: number, kickoffAt: string) =>
     overrides.has(matchId) || now < Date.parse(kickoffAt);
 
@@ -209,25 +202,8 @@ export function QuinielaClient({
         )}
       </div>
 
-      {/* today's matches */}
-      {mounted && todayMatches.length > 0 && (
-        <details open className="group">
-          <summary className="flex cursor-pointer select-none items-center gap-2 text-[11px] font-medium uppercase tracking-wider text-ink-500 hover:text-ink-300 [&::-webkit-details-marker]:hidden">
-            <span className="grid h-6 w-6 place-items-center rounded-md border border-line bg-pitch-800 group-hover:border-volt-400/50">
-              <span className="text-sm leading-none text-volt-400 transition-transform group-open:rotate-90">
-                ▸
-              </span>
-            </span>
-            Hoy · {todayMatches.length} partido{todayMatches.length > 1 ? "s" : ""}
-            <span className="ml-1 normal-case tracking-normal text-ink-500/60 group-open:hidden">
-              · toca para expandir
-            </span>
-          </summary>
-          <div className="mt-3 space-y-3">
-            {todayMatches.map((m) => renderCard(m, matchTag(m)))}
-          </div>
-        </details>
-      )}
+      {/* upcoming matches by day */}
+      {mounted && <DayMatchesPanel now={now} renderCard={renderCard} />}
 
       {tab === "group" ? (
         <GroupsPanel
@@ -409,6 +385,73 @@ function KnockoutPanel({
         Los cruces salen de tus pronósticos de grupos. Si cambias un grupo (aún abierto), los
         equipos se actualizan pero tus marcadores de llaves se conservan.
       </p>
+    </div>
+  );
+}
+
+function DayMatchesPanel({
+  now,
+  renderCard,
+}: {
+  now: number;
+  renderCard: (match: (typeof MATCHES)[number], tag: React.ReactNode) => React.ReactNode;
+}) {
+  const days = useMemo(() => {
+    const offsets = [0, 1, 2];
+    const labels = ["Hoy", "Mañana", null];
+    return offsets
+      .map((offset) => {
+        const d = new Date(now);
+        d.setDate(d.getDate() + offset);
+        const label =
+          labels[offset] ??
+          (() => {
+            const name = new Intl.DateTimeFormat("es", { weekday: "long" }).format(d);
+            return name.charAt(0).toUpperCase() + name.slice(1);
+          })();
+        const matches = MATCHES.filter((m) => isSameLocalDay(new Date(m.kickoffAt), d)).sort(
+          (a, b) => Date.parse(a.kickoffAt) - Date.parse(b.kickoffAt),
+        );
+        return { key: String(offset), label, matches };
+      })
+      .filter((d) => d.matches.length > 0);
+  }, [now]);
+
+  const [activeKey, setActiveKey] = useState(() => days[0]?.key ?? "0");
+  const activeDay = days.find((d) => d.key === activeKey) ?? days[0];
+
+  if (days.length === 0) return null;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex rounded-lg border border-line p-0.5">
+        {days.map(({ key, label, matches }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setActiveKey(key)}
+            className={`flex-1 rounded-md px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition ${
+              activeKey === key
+                ? "bg-volt-400 text-pitch-950"
+                : "text-ink-500 hover:text-ink-300"
+            }`}
+          >
+            {label}
+            <span
+              className={`ml-1.5 font-mono font-normal normal-case tracking-normal ${
+                activeKey === key ? "text-pitch-950/60" : "text-ink-600"
+              }`}
+            >
+              {matches.length}
+            </span>
+          </button>
+        ))}
+      </div>
+      {activeDay && (
+        <div className="space-y-3">
+          {activeDay.matches.map((m) => renderCard(m, matchTag(m)))}
+        </div>
+      )}
     </div>
   );
 }
