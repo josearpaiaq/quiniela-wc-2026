@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, Trophy } from "lucide-react";
 import { parseAsString, parseAsStringLiteral, useQueryState, useQueryStates } from "nuqs";
 import { MATCHES, type GroupLetter, type Phase } from "@/lib/db/seed-data";
@@ -17,6 +17,8 @@ import {
   buildBracket,
   computeGroupStandings,
   groupMatchPoints,
+  rankThirds,
+  type ThirdRow,
 } from "@/lib/tournament";
 const VALID_TABS = ["group", "r32", "r16", "qf", "sf", "finals"] as const;
 
@@ -220,14 +222,20 @@ export function QuinielaClient({
       {mounted && <DayMatchesPanel now={now} renderCard={renderCard} />}
 
       {tab === "group" ? (
-        <GroupsPanel
-          group={group}
-          onGroup={setGroup}
-          predictions={predictions}
-          scoreMap={scoreMap}
-          realScoreMap={realScoreMap}
-          renderCard={renderCard}
-        />
+        <>
+          <ThirdPlaceRankingPanel
+            scoreMap={scoreMap}
+            realScoreMap={realScoreMap}
+          />
+          <GroupsPanel
+            group={group}
+            onGroup={setGroup}
+            predictions={predictions}
+            scoreMap={scoreMap}
+            realScoreMap={realScoreMap}
+            renderCard={renderCard}
+          />
+        </>
       ) : bracketReady ? (
         <>
           <SectionSeparator label={PHASES.find((p) => p.key === tab)?.label ?? "Eliminación directa"} />
@@ -550,6 +558,138 @@ function DayMatchesPanel({
             <div className="space-y-3">
               {activeDay.matches.map((m) => renderCard(m, matchTag(m)))}
             </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function provisionalThirds(
+  scoreMap: Map<number, { home: number; away: number }>,
+): (ThirdRow & { incomplete: boolean })[] {
+  const rows = GROUP_LETTERS.map((g) => {
+    const standings = computeGroupStandings(g, scoreMap);
+    const third = standings[2];
+    const groupMatches = MATCHES.filter((m) => m.phase === "group" && m.group === g);
+    const incomplete = !groupMatches.every((m) => scoreMap.has(m.id));
+    return { ...third, rank: 0, qualified: false, incomplete };
+  });
+  rows.sort(
+    (a, b) =>
+      b.points - a.points || b.gd - a.gd || b.gf - a.gf || a.group.localeCompare(b.group),
+  );
+  return rows.map((r, i) => ({ ...r, rank: i + 1, qualified: i < 8 }));
+}
+
+function ThirdPlaceRankingPanel({
+  scoreMap,
+  realScoreMap,
+}: {
+  scoreMap: Map<number, { home: number; away: number }>;
+  realScoreMap: Map<number, { home: number; away: number }>;
+}) {
+  const [view] = useQueryState(
+    "gv",
+    parseAsStringLiteral(["mine", "real"] as const).withDefault("mine"),
+  );
+  const [collapsed, setCollapsed] = useState(true);
+  const activeMap = view === "mine" ? scoreMap : realScoreMap;
+
+  const isComplete = allGroupsComplete(activeMap);
+  const thirds: (ThirdRow & { incomplete?: boolean })[] = useMemo(() => {
+    if (isComplete) {
+      const result = rankThirds(activeMap);
+      return result ? result.map((r) => ({ ...r, incomplete: false })) : [];
+    }
+    return provisionalThirds(activeMap);
+  }, [activeMap, isComplete]);
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-line bg-pitch-900">
+      <button
+        type="button"
+        onClick={() => setCollapsed((c) => !c)}
+        className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left"
+      >
+        <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-ink-400">
+          Mejores terceros
+          {!isComplete && (
+            <span className="rounded bg-gold-400/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-gold-400">
+              Provisional
+            </span>
+          )}
+        </span>
+        <ChevronDown
+          aria-hidden
+          className={`h-4 w-4 text-ink-500 transition-transform duration-200 ${collapsed ? "-rotate-90" : ""}`}
+        />
+      </button>
+
+      {!collapsed && (
+        <div className="border-t border-line/60">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-line text-[10px] uppercase tracking-wider text-ink-500">
+                <th className="px-3 py-2 text-left font-medium">
+                  {view === "mine" ? "Según tu quiniela" : "Resultados reales"}
+                </th>
+                <th className="px-2 py-2 text-center font-medium">Gr</th>
+                <th className="px-2 py-2 text-center font-medium">DG</th>
+                <th className="px-2 py-2 text-center font-medium">GF</th>
+                <th className="px-3 py-2 text-center font-medium">Pts</th>
+              </tr>
+            </thead>
+            <tbody>
+              {thirds.map((row, index) => {
+                const team = TEAM_BY_CODE.get(row.code)!;
+                const isNinth = index === 8;
+                return (
+                  <Fragment key={row.code}>
+                    {isNinth && (
+                      <tr className="border-t-2 border-dashed border-line-bright">
+                        <td colSpan={5} className="px-3 py-1 text-[10px] text-ink-500 italic">
+                          ↑ Clasifican los 8 mejores terceros
+                        </td>
+                      </tr>
+                    )}
+                    <tr className="border-b border-line/40 last:border-0">
+                      <td className="px-3 py-2">
+                        <span className="flex items-center gap-2">
+                          <span
+                            className={`w-4 text-right font-mono text-xs ${
+                              row.qualified ? "font-bold text-volt-400" : "text-ink-500"
+                            }`}
+                          >
+                            {row.rank}
+                          </span>
+                          <span aria-hidden>{team.flag}</span>
+                          <span className={row.qualified ? "font-medium" : "text-ink-400"}>
+                            {team.name}
+                          </span>
+                          {"incomplete" in row && row.incomplete && (
+                            <span className="font-mono text-[10px] text-ink-600">···</span>
+                          )}
+                        </span>
+                      </td>
+                      <td className="px-2 py-2 text-center font-mono text-[11px] text-ink-500">
+                        {row.group}
+                      </td>
+                      <td className="px-2 py-2 text-center font-mono text-ink-500">
+                        {row.gd > 0 ? `+${row.gd}` : row.gd}
+                      </td>
+                      <td className="px-2 py-2 text-center font-mono text-ink-500">{row.gf}</td>
+                      <td className="px-3 py-2 text-center font-mono font-bold">{row.points}</td>
+                    </tr>
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+          {!isComplete && (
+            <p className="border-t border-line/60 px-3 py-1.5 text-[10px] italic text-ink-500">
+              Clasificación provisional · ··· indica grupos con partidos pendientes
+            </p>
           )}
         </div>
       )}
