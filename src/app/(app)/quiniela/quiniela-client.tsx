@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { ChevronDown, Trophy } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { ChevronDown, ChevronLeft, ChevronRight, Trophy } from "lucide-react";
+import { parseAsString, parseAsStringLiteral, useQueryState, useQueryStates } from "nuqs";
 import { MATCHES, type GroupLetter, type Phase } from "@/lib/db/seed-data";
 import {
   PHASES,
@@ -17,6 +18,12 @@ import {
   computeGroupStandings,
   groupMatchPoints,
 } from "@/lib/tournament";
+const VALID_TABS = ["group", "r32", "r16", "qf", "sf", "finals"] as const;
+
+function localDateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 import { isSameLocalDay } from "@/lib/format";
 import { savePrediction } from "@/lib/actions/predictions";
 import { MatchCard, type SaveStatus } from "@/components/match-card";
@@ -47,8 +54,15 @@ export function QuinielaClient({
   openOverrides: number[];
 }) {
   const [predictions, setPredictions] = useState<ScoreRecord>(initialPredictions);
-  const [tab, setTab] = useState<PhaseKey>("group");
-  const [group, setGroup] = useState<GroupLetter>("A");
+  const [{ tab, group }, setNav] = useQueryStates(
+    {
+      tab: parseAsStringLiteral(VALID_TABS).withDefault("group"),
+      group: parseAsStringLiteral(GROUP_LETTERS).withDefault("A"),
+    },
+    { shallow: true },
+  );
+  const setTab = (t: PhaseKey) => setNav({ tab: t as (typeof VALID_TABS)[number] });
+  const setGroup = (g: GroupLetter) => setNav({ group: g });
   const [saveStatus, setSaveStatus] = useState<Record<number, SaveStatus>>({});
   const timers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   const overrides = useMemo(() => new Set(openOverrides), [openOverrides]);
@@ -223,10 +237,7 @@ export function QuinielaClient({
         <BracketPendingPanel
           groupFilled={groupFilled}
           predictions={predictions}
-          onGoToGroup={(g) => {
-            setGroup(g);
-            setTab("group");
-          }}
+          onGoToGroup={(g) => setNav({ tab: "group", group: g })}
         />
       )}
     </div>
@@ -248,7 +259,10 @@ function GroupsPanel({
   realScoreMap: Map<number, { home: number; away: number }>;
   renderCard: (match: (typeof MATCHES)[number], tag: React.ReactNode) => React.ReactNode;
 }) {
-  const [view, setView] = useState<"mine" | "real">("mine");
+  const [view, setView] = useQueryState(
+    "gv",
+    parseAsStringLiteral(["mine", "real"] as const).withDefault("mine"),
+  );
   const activeMap = view === "mine" ? scoreMap : realScoreMap;
   const standings = useMemo(() => computeGroupStandings(group, activeMap), [group, activeMap]);
   const matches = MATCHES.filter((m) => m.phase === "group" && m.group === group).sort(
@@ -399,32 +413,62 @@ function DayMatchesPanel({
   now: number;
   renderCard: (match: (typeof MATCHES)[number], tag: React.ReactNode) => React.ReactNode;
 }) {
-  const days = useMemo(() => {
-    const offsets = [0, 1, 2];
-    const labels = ["Hoy", "Mañana", null];
-    return offsets
-      .map((offset) => {
-        const d = new Date(now);
-        d.setDate(d.getDate() + offset);
-        const label =
-          labels[offset] ??
-          (() => {
-            const name = new Intl.DateTimeFormat("es", { weekday: "long" }).format(d);
-            return name.charAt(0).toUpperCase() + name.slice(1);
-          })();
-        const matches = MATCHES.filter((m) => isSameLocalDay(new Date(m.kickoffAt), d)).sort(
-          (a, b) => Date.parse(a.kickoffAt) - Date.parse(b.kickoffAt),
-        );
-        return { key: String(offset), label, matches };
-      })
-      .filter((d) => d.matches.length > 0);
+  const today = new Date(now);
+  const todayKey = localDateKey(today);
+
+  const allDays = useMemo(() => {
+    const dayMap = new Map<string, (typeof MATCHES)[number][]>();
+    for (const m of MATCHES) {
+      const key = localDateKey(new Date(m.kickoffAt));
+      if (!dayMap.has(key)) dayMap.set(key, []);
+      dayMap.get(key)!.push(m);
+    }
+
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dayAfter = new Date(now);
+    dayAfter.setDate(dayAfter.getDate() + 2);
+
+    return [...dayMap.keys()].sort().map((key) => {
+      const [y, mo, d] = key.split("-").map(Number);
+      const date = new Date(y, mo - 1, d);
+
+      let label: string;
+      if (isSameLocalDay(date, today)) label = "Hoy";
+      else if (isSameLocalDay(date, tomorrow)) label = "Mañana";
+      else if (isSameLocalDay(date, dayAfter)) {
+        const name = new Intl.DateTimeFormat("es", { weekday: "long" }).format(date);
+        label = name.charAt(0).toUpperCase() + name.slice(1);
+      } else {
+        label = new Intl.DateTimeFormat("es", { day: "numeric", month: "short" }).format(date);
+      }
+
+      const matches = dayMap.get(key)!.sort(
+        (a, b) => Date.parse(a.kickoffAt) - Date.parse(b.kickoffAt),
+      );
+      return { key, label, matches, isPast: key < todayKey };
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [now]);
 
-  const [activeKey, setActiveKey] = useState(() => days[0]?.key ?? "0");
-  const [collapsed, setCollapsed] = useState(false);
-  const activeDay = days.find((d) => d.key === activeKey) ?? days[0];
+  const [dayParam, setDayParam] = useQueryState("day", parseAsString);
+  const activeKey = (() => {
+    if (dayParam && allDays.some((d) => d.key === dayParam)) return dayParam;
+    return allDays.find((d) => d.key >= todayKey)?.key ?? allDays[0]?.key ?? todayKey;
+  })();
+  const setActiveKey = (key: string) => setDayParam(key === todayKey ? null : key);
 
-  if (days.length === 0) return null;
+  const [collapsed, setCollapsed] = useState(false);
+  const activeDay = allDays.find((d) => d.key === activeKey);
+  const activeIndex = allDays.findIndex((d) => d.key === activeKey);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const activeButtonRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    activeButtonRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  }, [activeKey]);
+
+  if (allDays.length === 0) return null;
 
   return (
     <div className="overflow-hidden rounded-xl border border-line bg-pitch-900">
@@ -434,13 +478,11 @@ function DayMatchesPanel({
         className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left"
       >
         <span className="text-xs font-bold uppercase tracking-wider text-ink-400">
-          Próximos partidos
+          Partidos del mundial
         </span>
         <span className="flex items-center gap-2">
-          {collapsed && (
-            <span className="font-mono text-xs text-ink-600">
-              {days.map((d) => d.label).join(" · ")}
-            </span>
+          {collapsed && activeDay && (
+            <span className="font-mono text-xs text-ink-600">{activeDay.label}</span>
           )}
           <ChevronDown
             aria-hidden
@@ -451,27 +493,59 @@ function DayMatchesPanel({
 
       {!collapsed && (
         <div className="space-y-3 border-t border-line/60 px-4 pb-4 pt-3">
-          <div className="flex rounded-lg border border-line p-0.5">
-            {days.map(({ key, label, matches }) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setActiveKey(key)}
-                className={`flex-1 rounded-md px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition ${
-                  activeKey === key ? "bg-volt-400 text-pitch-950" : "text-ink-500 hover:text-ink-300"
-                }`}
-              >
-                {label}
-                <span
-                  className={`ml-1.5 font-mono font-normal normal-case tracking-normal ${
-                    activeKey === key ? "text-pitch-950/60" : "text-ink-600"
-                  }`}
-                >
-                  {matches.length}
-                </span>
-              </button>
-            ))}
+          {/* day strip */}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              disabled={activeIndex <= 0}
+              onClick={() => allDays[activeIndex - 1] && setActiveKey(allDays[activeIndex - 1].key)}
+              className="shrink-0 rounded-md p-1 text-ink-500 transition hover:text-ink-300 disabled:opacity-20"
+              aria-label="Día anterior"
+            >
+              <ChevronLeft aria-hidden className="h-4 w-4" />
+            </button>
+
+            <div ref={scrollRef} className="-mx-1 flex min-w-0 flex-1 gap-1 overflow-x-auto px-1 py-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {allDays.map(({ key, label, matches }) => {
+                const active = key === activeKey;
+                const isToday = key === todayKey;
+                return (
+                  <button
+                    key={key}
+                    ref={active ? activeButtonRef : undefined}
+                    type="button"
+                    onClick={() => setActiveKey(key)}
+                    className={`relative shrink-0 rounded-lg px-2.5 py-1.5 text-center transition ${
+                      active
+                        ? "bg-volt-400 text-pitch-950"
+                        : "border border-line text-ink-500 hover:border-line-bright hover:text-ink-300"
+                    }`}
+                  >
+                    <span className="block font-display text-[11px] font-bold uppercase leading-none">
+                      {label}
+                    </span>
+                    <span className={`block font-mono text-[10px] leading-tight ${active ? "text-pitch-950/60" : "text-ink-600"}`}>
+                      {matches.length}p
+                    </span>
+                    {isToday && !active && (
+                      <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-volt-400" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              disabled={activeIndex >= allDays.length - 1}
+              onClick={() => allDays[activeIndex + 1] && setActiveKey(allDays[activeIndex + 1].key)}
+              className="shrink-0 rounded-md p-1 text-ink-500 transition hover:text-ink-300 disabled:opacity-20"
+              aria-label="Día siguiente"
+            >
+              <ChevronRight aria-hidden className="h-4 w-4" />
+            </button>
           </div>
+
           {activeDay && (
             <div className="space-y-3">
               {activeDay.matches.map((m) => renderCard(m, matchTag(m)))}

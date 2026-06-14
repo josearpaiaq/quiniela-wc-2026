@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Chivo, Chivo_Mono } from "next/font/google";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
 
 const bricolage = Bricolage_Grotesque({
@@ -40,7 +41,7 @@ export default function RootLayout({
       <body
         className={`${bricolage.variable} ${chivo.variable} ${chivoMono.variable} font-sans antialiased`}
       >
-        {children}
+        <NuqsAdapter>{children}</NuqsAdapter>
       </body>
     </html>
   );
