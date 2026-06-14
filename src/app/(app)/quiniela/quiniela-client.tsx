@@ -473,8 +473,10 @@ function DayMatchesPanel({
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeButtonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    activeButtonRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-  }, [activeKey]);
+    if (!collapsed) {
+      activeButtonRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }
+  }, [activeKey, collapsed]);
 
   if (allDays.length === 0) return null;
 
