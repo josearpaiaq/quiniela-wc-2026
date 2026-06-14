@@ -1,12 +1,11 @@
+import { Suspense } from "react";
 import { eq } from "drizzle-orm";
 import { requireUser } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
 import type { ScoreRecord } from "@/lib/dto";
 import { QuinielaClient } from "./quiniela-client";
 
-export const dynamic = "force-dynamic";
-
-export default async function QuinielaPage() {
+async function QuinielaContent() {
   const session = await requireUser();
   const db = getDb();
 
@@ -46,5 +45,13 @@ export default async function QuinielaPage() {
       results={results}
       openOverrides={overrideRows.map((r) => r.id)}
     />
+  );
+}
+
+export default function QuinielaPage() {
+  return (
+    <Suspense fallback={null}>
+      <QuinielaContent />
+    </Suspense>
   );
 }

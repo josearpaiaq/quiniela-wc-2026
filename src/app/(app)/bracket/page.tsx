@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { eq } from "drizzle-orm";
 import { requireUser } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
@@ -5,9 +6,7 @@ import { overrideRowsToMap, rowsToScoreMap, scoreMapToRecord } from "@/lib/score
 import { allGroupsComplete, buildBracket } from "@/lib/tournament";
 import { BracketView } from "./bracket-view";
 
-export const dynamic = "force-dynamic";
-
-export default async function BracketPage() {
+async function BracketContent() {
   const session = await requireUser();
   const db = getDb();
 
@@ -35,5 +34,13 @@ export default async function BracketPage() {
       realScores={scoreMapToRecord(realScores)}
       bracketReady={allGroupsComplete(myScores)}
     />
+  );
+}
+
+export default function BracketPage() {
+  return (
+    <Suspense fallback={null}>
+      <BracketContent />
+    </Suspense>
   );
 }

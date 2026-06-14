@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -12,8 +13,6 @@ import { isMatchOpen } from "@/lib/rules";
 import { overrideRowsToMap, rowsToScoreMap } from "@/lib/score-rows";
 import { buildBracket, scoreUser, ROUND_VALUES, type ScoredRound } from "@/lib/tournament";
 
-export const dynamic = "force-dynamic";
-
 const ROUND_LABELS: Record<ScoredRound, string> = {
   r32: "En dieciseisavos",
   r16: "En octavos",
@@ -23,7 +22,7 @@ const ROUND_LABELS: Record<ScoredRound, string> = {
   champion: "Campeón",
 };
 
-export default async function QuinielaAjenaPage({
+async function QuinielaAjenaContent({
   params,
 }: {
   params: Promise<{ userId: string }>;
@@ -211,5 +210,13 @@ export default async function QuinielaAjenaPage({
         })}
       </section>
     </div>
+  );
+}
+
+export default function QuinielaAjenaPage(props: { params: Promise<{ userId: string }> }) {
+  return (
+    <Suspense fallback={null}>
+      <QuinielaAjenaContent {...props} />
+    </Suspense>
   );
 }

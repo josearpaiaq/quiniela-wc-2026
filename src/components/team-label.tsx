@@ -1,4 +1,7 @@
+"use client";
+
 import { TEAM_BY_CODE } from "@/lib/dto";
+import { Tooltip } from "./tooltip";
 
 export function TeamLabel({
   code,
@@ -13,20 +16,22 @@ export function TeamLabel({
   const alignClass = align === "right" ? "flex-row-reverse text-right" : "text-left";
   if (!team) {
     return (
-      <span className={`flex items-center gap-2 ${alignClass} text-ink-500/70`}>
-        <span className="grid h-6 w-6 place-items-center rounded-full border border-dashed border-line-bright text-[10px]">
+      <span className={`flex min-w-0 items-center gap-2 ${alignClass} text-ink-500/70`}>
+        <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-dashed border-line-bright text-[10px]">
           ?
         </span>
-        <span className="text-sm italic">{placeholder}</span>
+        <span className="truncate text-sm italic">{placeholder}</span>
       </span>
     );
   }
   return (
-    <span className={`flex items-center gap-2 ${alignClass}`}>
-      <span aria-hidden className="text-xl leading-none">
-        {team.flag}
+    <Tooltip content={team.name}>
+      <span className={`flex min-w-0 items-center gap-2 ${alignClass}`}>
+        <span aria-hidden className="shrink-0 text-xl leading-none">
+          {team.flag}
+        </span>
+        <span className="truncate text-sm font-medium">{team.name}</span>
       </span>
-      <span className="text-sm font-medium">{team.name}</span>
-    </span>
+    </Tooltip>
   );
 }

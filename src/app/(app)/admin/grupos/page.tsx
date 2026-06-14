@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { asc, eq } from "drizzle-orm";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
@@ -7,8 +8,6 @@ import { AdminTabs } from "../admin-tabs";
 import { CopyCodeButton, CreateGroupForm } from "./create-group-form";
 import { GroupMembers, type MemberOption } from "./group-members";
 
-export const dynamic = "force-dynamic";
-
 interface GroupCard {
   id: string;
   name: string;
@@ -16,7 +15,7 @@ interface GroupCard {
   members: MemberOption[];
 }
 
-export default async function AdminGruposPage() {
+async function AdminGruposContent() {
   await requireAdmin();
   const db = getDb();
 
@@ -103,5 +102,13 @@ export default async function AdminGruposPage() {
         ))}
       </div>
     </div>
+  );
+}
+
+export default function AdminGruposPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminGruposContent />
+    </Suspense>
   );
 }

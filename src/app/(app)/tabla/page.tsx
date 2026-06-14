@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { eq, inArray } from "drizzle-orm";
 import Link from "next/link";
 import { ArrowRight, Medal } from "lucide-react";
@@ -9,11 +10,9 @@ import { overrideRowsToMap, rowsToScoreMap } from "@/lib/score-rows";
 import { scoreUser, type Score } from "@/lib/tournament";
 import { JoinGroupForm } from "./join-group-form";
 
-export const dynamic = "force-dynamic";
-
 const MEDAL_COLORS = ["text-gold-400", "text-ink-300", "text-[#cd7f32]"];
 
-export default async function TablaPage({
+async function TablaContent({
   searchParams,
 }: {
   searchParams: Promise<{ grupo?: string | string[] }>;
@@ -171,5 +170,13 @@ export default async function TablaPage({
 
       <JoinGroupForm variant="discreet" />
     </div>
+  );
+}
+
+export default function TablaPage(props: { searchParams: Promise<{ grupo?: string | string[] }> }) {
+  return (
+    <Suspense fallback={null}>
+      <TablaContent {...props} />
+    </Suspense>
   );
 }

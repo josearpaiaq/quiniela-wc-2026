@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { and, eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -14,9 +15,7 @@ import { isPredictionVisibleToOthers } from "@/lib/rules";
 import { overrideRowsToMap, rowsToScoreMap } from "@/lib/score-rows";
 import { buildBracket, groupMatchPoints } from "@/lib/tournament";
 
-export const dynamic = "force-dynamic";
-
-export default async function PartidoPage({
+async function PartidoContent({
   params,
   searchParams,
 }: {
@@ -209,5 +208,16 @@ export default async function PartidoPage({
         )}
       </section>
     </div>
+  );
+}
+
+export default function PartidoPage(props: {
+  params: Promise<{ matchId: string }>;
+  searchParams: Promise<{ grupo?: string | string[] }>;
+}) {
+  return (
+    <Suspense fallback={null}>
+      <PartidoContent {...props} />
+    </Suspense>
   );
 }
