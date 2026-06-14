@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ListChecks, Database, Network, Trophy } from "lucide-react";
+import { ListChecks, Database, Network, Trophy, Info } from "lucide-react";
 
 const LINKS = [
   { href: "/quiniela", label: "Quiniela", icon: ListChecks },
   { href: "/bracket", label: "Bracket", icon: Network },
   { href: "/tabla", label: "Tabla", icon: Trophy },
+  { href: "/reglas", label: "Reglas", icon: Info },
 ];
 
 const ADMIN_LINK = { href: "/admin/resultados", label: "Admin", icon: Database };
