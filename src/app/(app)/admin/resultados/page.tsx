@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { requireAdmin } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
 import { overrideRowsToMap, rowsToScoreMap, scoreMapToRecord } from "@/lib/score-rows";
@@ -5,9 +6,7 @@ import { buildBracket } from "@/lib/tournament";
 import { AdminTabs } from "../admin-tabs";
 import { AdminClient, type AdminOverrideRecord } from "./admin-client";
 
-export const dynamic = "force-dynamic";
-
-export default async function AdminResultadosPage() {
+async function AdminResultadosContent() {
   await requireAdmin();
   const db = getDb();
 
@@ -42,5 +41,13 @@ export default async function AdminResultadosPage() {
         knockoutOverrides={overrideRecord}
       />
     </div>
+  );
+}
+
+export default function AdminResultadosPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminResultadosContent />
+    </Suspense>
   );
 }

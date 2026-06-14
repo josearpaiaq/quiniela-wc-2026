@@ -1,12 +1,11 @@
+import { Suspense } from "react";
 import { asc } from "drizzle-orm";
 import { requireAdmin } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
 import { AdminTabs } from "../admin-tabs";
 import { ResetPasswordButton } from "./reset-password-button";
 
-export const dynamic = "force-dynamic";
-
-export default async function AdminUsuariosPage() {
+async function AdminUsuariosContent() {
   const session = await requireAdmin();
   const db = getDb();
 
@@ -57,5 +56,13 @@ export default async function AdminUsuariosPage() {
         ))}
       </ul>
     </div>
+  );
+}
+
+export default function AdminUsuariosPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminUsuariosContent />
+    </Suspense>
   );
 }

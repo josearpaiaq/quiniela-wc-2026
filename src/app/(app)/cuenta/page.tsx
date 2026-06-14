@@ -1,12 +1,11 @@
+import { Suspense } from "react";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
 import { ChangePasswordForm } from "./change-password-form";
 
-export const dynamic = "force-dynamic";
-
-export default async function CuentaPage() {
+async function CuentaContent() {
   const session = await requireUser();
   const db = getDb();
   const [user] = await db
@@ -56,5 +55,13 @@ export default async function CuentaPage() {
         <ChangePasswordForm />
       </section>
     </div>
+  );
+}
+
+export default function CuentaPage() {
+  return (
+    <Suspense fallback={null}>
+      <CuentaContent />
+    </Suspense>
   );
 }
