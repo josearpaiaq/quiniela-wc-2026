@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { Trophy } from "lucide-react";
+import { ChevronDown, Trophy } from "lucide-react";
 import { MATCHES, type GroupLetter, type Phase } from "@/lib/db/seed-data";
 import {
   PHASES,
@@ -215,7 +215,10 @@ export function QuinielaClient({
           renderCard={renderCard}
         />
       ) : bracketReady ? (
-        <KnockoutPanel tab={tab} renderCard={renderCard} />
+        <>
+          <SectionSeparator label={PHASES.find((p) => p.key === tab)?.label ?? "Eliminación directa"} />
+          <KnockoutPanel tab={tab} renderCard={renderCard} />
+        </>
       ) : (
         <BracketPendingPanel
           groupFilled={groupFilled}
@@ -418,40 +421,76 @@ function DayMatchesPanel({
   }, [now]);
 
   const [activeKey, setActiveKey] = useState(() => days[0]?.key ?? "0");
+  const [collapsed, setCollapsed] = useState(false);
   const activeDay = days.find((d) => d.key === activeKey) ?? days[0];
 
   if (days.length === 0) return null;
 
   return (
-    <div className="space-y-3">
-      <div className="flex rounded-lg border border-line p-0.5">
-        {days.map(({ key, label, matches }) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setActiveKey(key)}
-            className={`flex-1 rounded-md px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition ${
-              activeKey === key
-                ? "bg-volt-400 text-pitch-950"
-                : "text-ink-500 hover:text-ink-300"
-            }`}
-          >
-            {label}
-            <span
-              className={`ml-1.5 font-mono font-normal normal-case tracking-normal ${
-                activeKey === key ? "text-pitch-950/60" : "text-ink-600"
-              }`}
-            >
-              {matches.length}
+    <div className="overflow-hidden rounded-xl border border-line bg-pitch-900">
+      <button
+        type="button"
+        onClick={() => setCollapsed((c) => !c)}
+        className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left"
+      >
+        <span className="text-xs font-bold uppercase tracking-wider text-ink-400">
+          Próximos partidos
+        </span>
+        <span className="flex items-center gap-2">
+          {collapsed && (
+            <span className="font-mono text-xs text-ink-600">
+              {days.map((d) => d.label).join(" · ")}
             </span>
-          </button>
-        ))}
-      </div>
-      {activeDay && (
-        <div className="space-y-3">
-          {activeDay.matches.map((m) => renderCard(m, matchTag(m)))}
+          )}
+          <ChevronDown
+            aria-hidden
+            className={`h-4 w-4 text-ink-500 transition-transform duration-200 ${collapsed ? "-rotate-90" : ""}`}
+          />
+        </span>
+      </button>
+
+      {!collapsed && (
+        <div className="space-y-3 border-t border-line/60 px-4 pb-4 pt-3">
+          <div className="flex rounded-lg border border-line p-0.5">
+            {days.map(({ key, label, matches }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setActiveKey(key)}
+                className={`flex-1 rounded-md px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition ${
+                  activeKey === key ? "bg-volt-400 text-pitch-950" : "text-ink-500 hover:text-ink-300"
+                }`}
+              >
+                {label}
+                <span
+                  className={`ml-1.5 font-mono font-normal normal-case tracking-normal ${
+                    activeKey === key ? "text-pitch-950/60" : "text-ink-600"
+                  }`}
+                >
+                  {matches.length}
+                </span>
+              </button>
+            ))}
+          </div>
+          {activeDay && (
+            <div className="space-y-3">
+              {activeDay.matches.map((m) => renderCard(m, matchTag(m)))}
+            </div>
+          )}
         </div>
       )}
+    </div>
+  );
+}
+
+function SectionSeparator({ label }: { label: string }) {
+  return (
+    <div className="relative flex items-center gap-3 py-1">
+      <div className="h-px flex-1 bg-line" />
+      <span className="shrink-0 font-display text-[11px] font-bold uppercase tracking-widest text-ink-500">
+        {label}
+      </span>
+      <div className="h-px flex-1 bg-line" />
     </div>
   );
 }
