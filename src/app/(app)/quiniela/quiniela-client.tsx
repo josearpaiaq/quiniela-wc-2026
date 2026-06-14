@@ -515,7 +515,7 @@ function DayMatchesPanel({
                     ref={active ? activeButtonRef : undefined}
                     type="button"
                     onClick={() => setActiveKey(key)}
-                    className={`relative shrink-0 rounded-lg px-2.5 py-1.5 text-center transition ${
+                    className={`relative shrink-0 w-[calc((100%-0.5rem)/3)] md:w-auto rounded-lg px-2.5 py-1.5 md:px-4 md:py-2 text-center transition ${
                       active
                         ? "bg-volt-400 text-pitch-950"
                         : "border border-line text-ink-500 hover:border-line-bright hover:text-ink-300"
