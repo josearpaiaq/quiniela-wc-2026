@@ -151,6 +151,8 @@ export function QuinielaClient({
         kickoffAt={match.kickoffAt}
         venue={match.venue}
         tag={tag}
+        group={match.phase === "group" ? match.group : undefined}
+        onGroupClick={match.phase === "group" && match.group ? () => setNav({ tab: "group", group: match.group as GroupLetter }) : undefined}
         homeCode={homeCode}
         awayCode={awayCode}
         score={prediction}

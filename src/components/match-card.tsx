@@ -15,6 +15,8 @@ export function MatchCard({
   kickoffAt,
   venue,
   tag,
+  group,
+  onGroupClick,
   homeCode,
   awayCode,
   score,
@@ -31,6 +33,9 @@ export function MatchCard({
   venue: string;
   /** small leading label, e.g. "P12" or "3er puesto" */
   tag: React.ReactNode;
+  /** group letter for group-phase matches — shows a clickable badge */
+  group?: string;
+  onGroupClick?: () => void;
   homeCode: string | null;
   awayCode: string | null;
   score: ScoreDTO | undefined;
@@ -59,8 +64,17 @@ export function MatchCard({
           <span className="rounded bg-pitch-700 px-1.5 py-0.5 font-mono font-semibold text-ink-300">
             {tag}
           </span>
+          {group && (
+            <button
+              type="button"
+              onClick={onGroupClick}
+              className="rounded bg-pitch-700 px-1.5 py-0.5 font-display text-[10px] font-bold uppercase tracking-wide text-ink-400 transition hover:bg-volt-400/15 hover:text-volt-400"
+            >
+              Gr {group}
+            </button>
+          )}
           <time suppressHydrationWarning>{formatKickoff(kickoffAt)}</time>
-          <span className="hidden sm:inline">· {shortVenue(venue)}</span>
+          <span>· {shortVenue(venue)}</span>
         </span>
         <span className="font-mono">
           {saveStatus === "saving" && <span className="text-ink-500">···</span>}
