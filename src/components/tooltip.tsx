@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import * as RadixTooltip from "@radix-ui/react-tooltip";
 
 export function TooltipProvider({ children }: { children: React.ReactNode }) {
@@ -17,9 +18,13 @@ export function Tooltip({
   content: string;
   children: React.ReactNode;
 }) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <RadixTooltip.Root>
-      <RadixTooltip.Trigger asChild>{children}</RadixTooltip.Trigger>
+    <RadixTooltip.Root open={open} onOpenChange={setOpen}>
+      <RadixTooltip.Trigger asChild onClick={() => setOpen(true)}>
+        {children}
+      </RadixTooltip.Trigger>
       <RadixTooltip.Portal>
         <RadixTooltip.Content
           sideOffset={6}
