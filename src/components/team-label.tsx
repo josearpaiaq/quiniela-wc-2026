@@ -26,7 +26,7 @@ export function TeamLabel({
   }
   return (
     <Tooltip content={team.name}>
-      <span className={`flex min-w-0 items-center gap-2 ${alignClass}`}>
+      <span className={`flex min-w-0 overflow-hidden items-center gap-2 ${alignClass}`}>
         <span aria-hidden className="shrink-0 text-xl leading-none">
           {team.flag}
         </span>

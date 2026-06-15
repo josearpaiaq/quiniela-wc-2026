@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { Fragment, forwardRef, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, Trophy } from "lucide-react";
 import { parseAsString, parseAsStringLiteral, useQueryState, useQueryStates } from "nuqs";
 import { MATCHES, type GroupLetter, type Phase } from "@/lib/db/seed-data";
@@ -68,6 +68,15 @@ export function QuinielaClient({
   const [saveStatus, setSaveStatus] = useState<Record<number, SaveStatus>>({});
   const timers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   const overrides = useMemo(() => new Set(openOverrides), [openOverrides]);
+  const groupsPanelRef = useRef<HTMLDivElement>(null);
+  const pendingScrollToGroups = useRef(false);
+
+  useEffect(() => {
+    if (pendingScrollToGroups.current && groupsPanelRef.current) {
+      groupsPanelRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      pendingScrollToGroups.current = false;
+    }
+  }, [tab]);
 
   const scoreMap = useMemo(() => toScoreMap(predictions), [predictions]);
   const realScoreMap = useMemo(() => toScoreMap(results), [results]);
@@ -151,6 +160,19 @@ export function QuinielaClient({
         kickoffAt={match.kickoffAt}
         venue={match.venue}
         tag={tag}
+        group={match.phase === "group" ? match.group : undefined}
+        onGroupClick={
+          match.phase === "group" && match.group
+            ? () => {
+              setNav({ tab: "group", group: match.group as GroupLetter });
+              if (tab === "group") {
+                requestAnimationFrame(() => {
+                  groupsPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                });
+              } else {
+                pendingScrollToGroups.current = true;
+              }
+            } : undefined}
         homeCode={homeCode}
         awayCode={awayCode}
         score={prediction}
@@ -234,6 +256,7 @@ export function QuinielaClient({
             scoreMap={scoreMap}
             realScoreMap={realScoreMap}
             renderCard={renderCard}
+            ref={groupsPanelRef}
           />
         </>
       ) : bracketReady ? (
@@ -252,21 +275,21 @@ export function QuinielaClient({
   );
 }
 
-function GroupsPanel({
-  group,
-  onGroup,
-  predictions,
-  scoreMap,
-  realScoreMap,
-  renderCard,
-}: {
+const GroupsPanel = forwardRef<HTMLDivElement, {
   group: GroupLetter;
   onGroup: (g: GroupLetter) => void;
   predictions: ScoreRecord;
   scoreMap: Map<number, { home: number; away: number }>;
   realScoreMap: Map<number, { home: number; away: number }>;
   renderCard: (match: (typeof MATCHES)[number], tag: React.ReactNode) => React.ReactNode;
-}) {
+}>(function GroupsPanel({
+  group,
+  onGroup,
+  predictions,
+  scoreMap,
+  realScoreMap,
+  renderCard,
+}, ref) {
   const [view, setView] = useQueryState(
     "gv",
     parseAsStringLiteral(["mine", "real"] as const).withDefault("mine"),
@@ -279,7 +302,7 @@ function GroupsPanel({
   const hasRealResults = matches.some((m) => realScoreMap.has(m.id));
 
   return (
-    <div className="space-y-4">
+    <div ref={ref} className="scroll-mt-28 space-y-4">
       {/* group chips */}
       <div className="-mx-4 overflow-x-auto px-4 py-2">
         <div className="flex gap-1.5 pb-1">
@@ -390,7 +413,7 @@ function GroupsPanel({
       <div className="space-y-3">{matches.map((m) => renderCard(m, `P${m.id}`))}</div>
     </div>
   );
-}
+});
 
 function KnockoutPanel({
   tab,
