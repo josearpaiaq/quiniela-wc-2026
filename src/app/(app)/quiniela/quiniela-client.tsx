@@ -29,10 +29,28 @@ function localDateKey(d: Date): string {
 import { isSameLocalDay } from "@/lib/format";
 import { savePrediction } from "@/lib/actions/predictions";
 import { MatchCard, type SaveStatus } from "@/components/match-card";
+import { PanamaConfettiProvider, usePanamaConfetti } from "@/components/panama-confetti";
 
 type PhaseKey = Phase | "finals";
 
 const GROUP_MATCH_IDS = MATCHES.filter((m) => m.phase === "group").map((m) => m.id);
+
+const PAN_MATCH_DAYS = new Set(
+  MATCHES
+    .filter((m) => m.phase === "group" && (m.home === "PAN" || m.away === "PAN"))
+    .map((m) => localDateKey(new Date(m.kickoffAt))),
+);
+
+function PanamaAutoTrigger() {
+  const { trigger } = usePanamaConfetti();
+  useEffect(() => {
+    if (PAN_MATCH_DAYS.has(localDateKey(new Date()))) {
+      trigger();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return null;
+}
 
 function matchTag(match: (typeof MATCHES)[number]): React.ReactNode {
   if (match.phase === "third") return "3er puesto";
@@ -188,6 +206,8 @@ export function QuinielaClient({
   };
 
   return (
+    <PanamaConfettiProvider>
+      <PanamaAutoTrigger />
     <div className="space-y-4">
       {/* phase tabs */}
       <div className="sticky top-[57px] z-20 -mx-4 overflow-x-auto border-b border-line bg-pitch-950/95 px-4 backdrop-blur">
@@ -272,6 +292,7 @@ export function QuinielaClient({
         />
       )}
     </div>
+    </PanamaConfettiProvider>
   );
 }
 
