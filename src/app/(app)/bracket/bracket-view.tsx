@@ -5,6 +5,21 @@ import { Medal, Trophy } from "lucide-react";
 import { MATCHES } from "@/lib/db/seed-data";
 import { TEAM_BY_CODE, type ScoreRecord } from "@/lib/dto";
 
+const SOURCE_MAP = new Map(
+  MATCHES.filter((m) => m.homeSource).map((m) => [
+    m.id,
+    { homeSource: m.homeSource!, awaySource: m.awaySource! },
+  ]),
+);
+
+function formatSource(source: string): string {
+  if (/^[A-L][12]$/.test(source)) return `${source[1]}° Grupo ${source[0]}`;
+  if (source.startsWith("3")) return `3° (${source.slice(1).split("").join("/")})`;
+  if (source.startsWith("W")) return `G P${source.slice(1)}`;
+  if (source.startsWith("L")) return `P P${source.slice(1)}`;
+  return source;
+}
+
 type SlotRecord = Record<number, { home: string | null; away: string | null }>;
 
 // Visual order derived from the tree so children sit next to their parent.
@@ -45,12 +60,15 @@ function TeamRow({
   code,
   goals,
   result,
+  source,
 }: {
   code: string | null;
   goals: number | null;
   result: "win" | "loss" | null;
+  source?: string | null;
 }) {
   const team = code ? TEAM_BY_CODE.get(code) : null;
+  const placeholder = !team && source ? formatSource(source) : null;
   return (
     <div
       className={`flex items-center justify-between gap-1 px-2 py-1 ${
@@ -62,7 +80,9 @@ function TeamRow({
           {team?.flag ?? "·"}
         </span>
         <span className="truncate text-xs font-medium">
-          {team?.name ?? <span className="italic text-ink-500/60">Por definir</span>}
+          {team?.name ?? (
+            <span className="italic text-ink-500/60">{placeholder ?? "Por definir"}</span>
+          )}
         </span>
       </span>
       <span className="font-mono text-xs font-semibold">
@@ -86,21 +106,27 @@ function MatchNode({
   const score = scores[matchId];
   const winner = winnerSideOf(score);
   const isFinal = matchId === 104;
+  const sources = SOURCE_MAP.get(matchId);
   return (
     <div
       className={`w-44 divide-y divide-line/60 rounded-lg border bg-pitch-900 ${
         isFinal ? "border-gold-400/50 shadow-[0_0_30px_rgba(255,198,63,0.12)]" : "border-line"
       }`}
     >
+      <div className="flex items-center justify-end px-2 pt-1">
+        <span className="font-mono text-[9px] text-ink-600">P{matchId}</span>
+      </div>
       <TeamRow
         code={slot?.home ?? null}
         goals={score?.home ?? null}
         result={winner ? (winner === "home" ? "win" : "loss") : null}
+        source={sources?.homeSource}
       />
       <TeamRow
         code={slot?.away ?? null}
         goals={score?.away ?? null}
         result={winner ? (winner === "away" ? "win" : "loss") : null}
+        source={sources?.awaySource}
       />
     </div>
   );
@@ -224,7 +250,19 @@ export function BracketView({
               )}
             </p>
           ) : (
-            <p className="italic text-ink-500">Por definir</p>
+            <p className="italic text-ink-500">
+              {(() => {
+                const s = SOURCE_MAP.get(103);
+                if (!s) return "Por definir";
+                const home = third?.home
+                  ? (TEAM_BY_CODE.get(third.home)?.name ?? formatSource(s.homeSource))
+                  : formatSource(s.homeSource);
+                const away = third?.away
+                  ? (TEAM_BY_CODE.get(third.away)?.name ?? formatSource(s.awaySource))
+                  : formatSource(s.awaySource);
+                return `${home} vs ${away}`;
+              })()}
+            </p>
           )}
         </div>
       </div>
