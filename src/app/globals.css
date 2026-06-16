@@ -79,8 +79,21 @@ body::before {
   }
 }
 
+@keyframes saved-flash-error {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 122, 89, 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 14px rgba(255, 122, 89, 0);
+  }
+}
+
 .saved-flash {
   animation: saved-flash 0.7s ease-out;
+}
+
+.saved-flash-error {
+  animation: saved-flash-error 0.7s ease-out;
 }
 
 /* diagonal stripes for locked matches */

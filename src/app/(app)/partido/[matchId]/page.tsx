@@ -155,18 +155,20 @@ async function PartidoContent({
           rows.map((row) => (
             <div
               key={row.userId}
-              className="space-y-1.5 rounded-lg border border-line bg-pitch-900 px-3 py-2.5 text-sm"
+              className={`space-y-1.5 rounded-lg border border-line bg-pitch-900 px-3 py-2.5 text-sm ${row.userId === session.sub ? "bg-volt-400/10" : ""}`}
             >
               <div className="flex items-center justify-between gap-2">
-                <Link
-                  href={`/tabla/${row.userId}`}
-                  className="min-w-0 truncate hover:text-volt-400"
-                >
-                  {row.displayName}{" "}
-                  <span className="text-xs text-ink-500">
-                    ({row.firstName} {row.lastName})
-                  </span>
-                </Link>
+                <div className="min-w-0">
+                  <Link
+                    href={`/tabla/${row.userId}`}
+                    className="min-w-0 truncate hover:text-volt-400"
+                  >
+                    {row.displayName}{" "}
+                    <span className="text-xs text-ink-500">
+                      ({row.firstName} {row.lastName}){row.userId === session.sub && <span className="ml-2 text-[10px] uppercase text-volt-400">tú</span>}
+                    </span>
+                  </Link>
+                </div>
                 {row.points !== null && (
                   <span
                     className={`shrink-0 rounded-full px-1.5 py-0.5 font-mono text-[11px] font-semibold ${

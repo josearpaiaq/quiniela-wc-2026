@@ -56,7 +56,7 @@ export function MatchCard({
   return (
     <article
       className={`rounded-xl border bg-pitch-900 p-3.5 transition ${
-        saveStatus === "saved" ? "saved-flash" : ""
+        saveStatus === "saved" ? "saved-flash" : "saved-flash-error"
       } ${open ? "border-line" : "locked-stripes border-line/70"}`}
     >
       <header className="mb-2.5 flex items-center justify-between gap-2 text-[11px] text-ink-500">
@@ -74,7 +74,6 @@ export function MatchCard({
             </button>
           )}
           <time suppressHydrationWarning>{formatKickoff(kickoffAt)}</time>
-          <span>· {shortVenue(venue)}</span>
         </span>
         <span className="font-mono">
           {saveStatus === "saving" && <span className="text-ink-500">···</span>}
@@ -106,6 +105,10 @@ export function MatchCard({
           />
         </div>
         <TeamLabel code={awayCode} align="right" />
+      </div>
+
+      <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-ink-500">
+        <span>{venue}</span>
       </div>
 
       {needsWinner && homeCode && awayCode && (
