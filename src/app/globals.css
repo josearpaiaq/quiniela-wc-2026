@@ -105,6 +105,20 @@ body::before {
   );
 }
 
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-120px) translateX(0) rotate(0deg);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) translateX(var(--confetti-drift, 0px)) rotate(var(--confetti-spin, 360deg));
+    opacity: 0;
+  }
+}
+
 /* hide number input spinners — scores use custom steppers */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
