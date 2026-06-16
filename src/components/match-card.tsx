@@ -56,7 +56,9 @@ export function MatchCard({
   return (
     <article
       className={`rounded-xl border bg-pitch-900 p-3.5 transition ${
-        saveStatus === "saved" ? "saved-flash" : "saved-flash-error"
+        saveStatus === "saved" ? "saved-flash" : ""
+      } ${
+        saveStatus === "error" ? "saved-flash-error" : ""
       } ${open ? "border-line" : "locked-stripes border-line/70"}`}
     >
       <header className="mb-2.5 flex items-center justify-between gap-2 text-[11px] text-ink-500">
