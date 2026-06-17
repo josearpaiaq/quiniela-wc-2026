@@ -40,7 +40,7 @@ export function NavLinks({ isAdmin }: { isAdmin: boolean }) {
             <li key={link.href} className="flex-1 md:flex-none">
               <Link
                 href={hrefWithParams(link.href)}
-                className={`flex flex-col items-center gap-0.5 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 text-[11px] font-medium uppercase tracking-wider transition md:flex-row md:gap-1.5 md:rounded-lg md:px-3 md:py-2 md:text-xs ${
+                className={`flex flex-col items-center gap-1 px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 text-[11px] font-medium uppercase tracking-wider transition md:flex-row md:gap-1.5 md:rounded-lg md:px-3 md:py-2 md:text-xs ${
                   active
                     ? "text-volt-400 md:bg-volt-400/10"
                     : "text-ink-500 hover:text-ink-300"
