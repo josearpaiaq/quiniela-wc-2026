@@ -18,7 +18,7 @@ export function usePanamaConfetti() {
 }
 
 const PANAMA_COLORS = ["#D21034", "#003893", "#FFFFFF", "#D21034", "#003893"];
-const PARTICLE_COUNT = 140;
+const PARTICLE_COUNT = 700;
 
 type Particle = {
   id: number;
@@ -39,7 +39,7 @@ function generateParticles(): Particle[] {
     id: i,
     left: Math.random() * 100,
     duration: 4800 + Math.random() * 2200,
-    delay: Math.random() * 1200,
+    delay: Math.random() * 300,
     drift: (Math.random() - 0.5) * 80,
     spin: (Math.random() - 0.5) * 720,
     isEmoji: Math.random() < 0.3,
@@ -90,20 +90,22 @@ function PanamaConfetti() {
 }
 
 export function PanamaConfettiProvider({ children }: { children: React.ReactNode }) {
-  const [active, setActive] = useState(false);
-  const [confettiKey, setConfettiKey] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [instances, setInstances] = useState<number[]>([]);
+  const counterRef = useRef(0);
+  const timersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
   const trigger = useCallback(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setConfettiKey((k) => k + 1);
-    setActive(true);
-    timerRef.current = setTimeout(() => setActive(false), 8500);
+    const id = ++counterRef.current;
+    setInstances((prev) => [...prev, id]);
+    const t = setTimeout(() => {
+      setInstances((prev) => prev.filter((i) => i !== id));
+      timersRef.current.delete(id);
+    }, 8500);
+    timersRef.current.set(id, t);
   }, []);
 
-  useEffect(
-    () => () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
+  useEffect(() => () => {
+      timersRef.current.forEach((t) => clearTimeout(t));
     },
     [],
   );
@@ -111,7 +113,9 @@ export function PanamaConfettiProvider({ children }: { children: React.ReactNode
   return (
     <PanamaConfettiContext.Provider value={{ trigger }}>
       {children}
-      {active && <PanamaConfetti key={confettiKey} />}
+      {instances.map((id) => (
+        <PanamaConfetti key={id} />
+      ))}
     </PanamaConfettiContext.Provider>
   );
 }
