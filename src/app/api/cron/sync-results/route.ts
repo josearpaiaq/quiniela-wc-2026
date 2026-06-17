@@ -4,8 +4,6 @@ import { getWCFinishedMatches } from "@/lib/football-data-client";
 import { getDb, schema } from "@/lib/db";
 import { MATCHES } from "@/lib/db/seed-data";
 
-export const dynamic = "force-dynamic";
-
 function utcDateString(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
