@@ -82,9 +82,8 @@ export const results = pgTable("results", {
   homeScore: smallint("home_score").notNull(), // 90 minutes
   awayScore: smallint("away_score").notNull(),
   winnerSide: winnerSideEnum("winner_side"), // penalties winner on knockout draws
-  enteredBy: uuid("entered_by")
-    .notNull()
-    .references(() => users.id),
+  // null when inserted by the automated sync cron job
+  enteredBy: uuid("entered_by").references(() => users.id),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
