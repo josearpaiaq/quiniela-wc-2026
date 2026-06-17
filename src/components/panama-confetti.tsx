@@ -89,15 +89,21 @@ function PanamaConfetti() {
   );
 }
 
+const MAX_CONCURRENT = 4;
+
 export function PanamaConfettiProvider({ children }: { children: React.ReactNode }) {
   const [instances, setInstances] = useState<number[]>([]);
   const counterRef = useRef(0);
+  const activeCountRef = useRef(0);
   const timersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
   const trigger = useCallback(() => {
+    if (activeCountRef.current >= MAX_CONCURRENT) return;
     const id = ++counterRef.current;
+    activeCountRef.current++;
     setInstances((prev) => [...prev, id]);
     const t = setTimeout(() => {
+      activeCountRef.current--;
       setInstances((prev) => prev.filter((i) => i !== id));
       timersRef.current.delete(id);
     }, 8500);
