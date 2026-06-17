@@ -18,7 +18,7 @@ export function usePanamaConfetti() {
 }
 
 const PANAMA_COLORS = ["#D21034", "#003893", "#FFFFFF", "#D21034", "#003893"];
-const PARTICLE_COUNT = 700;
+const PARTICLE_COUNT = 350;
 
 type Particle = {
   id: number;
