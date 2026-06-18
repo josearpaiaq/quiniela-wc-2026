@@ -2,7 +2,7 @@
 
 import { TEAM_BY_CODE } from "@/lib/dto";
 import { Tooltip } from "./tooltip";
-import { usePanamaConfetti } from "./panama-confetti";
+import { useConfetti } from "./confetti";
 
 export function TeamLabel({
   code,
@@ -13,7 +13,7 @@ export function TeamLabel({
   placeholder?: string;
   align?: "left" | "right";
 }) {
-  const { trigger } = usePanamaConfetti();
+  const { trigger } = useConfetti();
   const team = code ? TEAM_BY_CODE.get(code) : null;
   const alignClass = align === "right" ? "flex-row-reverse text-right" : "text-left";
   if (!team) {
@@ -26,17 +26,17 @@ export function TeamLabel({
       </span>
     );
   }
-  const isPanama = code === "PAN";
   return (
     <Tooltip content={team.name}>
       <span className={`flex min-w-0 overflow-hidden items-center gap-2 ${alignClass}`}>
-        <span
-          aria-hidden
-          className={`shrink-0 text-xl leading-none${isPanama ? " cursor-pointer transition-transform active:scale-95" : ""}`}
-          onClick={isPanama ? trigger : undefined}
+        <button
+          type="button"
+          aria-label={`Confetti ${team.name}`}
+          className="shrink-0 text-xl leading-none cursor-pointer transition-transform hover:scale-125 active:scale-95"
+          onClick={() => trigger(team.flag)}
         >
           {team.flag}
-        </span>
+        </button>
         <span className="truncate text-sm font-medium">{team.name}</span>
       </span>
     </Tooltip>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { logout } from "@/lib/actions/auth";
 import { getSession } from "@/lib/auth/session";
 import { NavLinks } from "@/components/nav";
+import { ConfettiProvider } from "@/components/confetti";
 
 async function HeaderSession() {
   const session = await getSession();
@@ -68,7 +69,9 @@ export default function AppLayout({
         </div>
       </header>
 
-      <main className="flex-1">{children}</main>
+      <ConfettiProvider>
+        <main className="flex-1">{children}</main>
+      </ConfettiProvider>
 
       <Suspense fallback={null}>
         <AdminNav mobile />

@@ -10,15 +10,15 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-type ConfettiCtx = { trigger: () => void };
-const PanamaConfettiContext = createContext<ConfettiCtx>({ trigger: () => {} });
+type ConfettiCtx = { trigger: (flag: string) => void };
+const ConfettiContext = createContext<ConfettiCtx>({ trigger: () => {} });
 
-export function usePanamaConfetti() {
-  return useContext(PanamaConfettiContext);
+export function useConfetti() {
+  return useContext(ConfettiContext);
 }
 
-const PANAMA_COLORS = ["#D21034", "#003893", "#FFFFFF", "#D21034", "#003893"];
-const PARTICLE_COUNT = 350;
+const CONFETTI_COLORS = ["#D21034", "#003893", "#FFFFFF", "#D21034", "#003893"];
+const PARTICLE_COUNT = 150;
 
 type Particle = {
   id: number;
@@ -28,13 +28,15 @@ type Particle = {
   drift: number;
   spin: number;
   isEmoji: boolean;
+  emoji: string;
   color: string;
   width: number;
   height: number;
   fontSize: number;
 };
 
-function generateParticles(): Particle[] {
+function generateParticles(flags: string[]): Particle[] {
+  const emojis = flags.length > 0 ? flags : ["🎉"];
   return Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
     id: i,
     left: Math.random() * 100,
@@ -43,7 +45,8 @@ function generateParticles(): Particle[] {
     drift: (Math.random() - 0.5) * 80,
     spin: (Math.random() - 0.5) * 720,
     isEmoji: Math.random() < 0.3,
-    color: PANAMA_COLORS[Math.floor(Math.random() * PANAMA_COLORS.length)],
+    emoji: emojis[Math.floor(Math.random() * emojis.length)],
+    color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
     width: 6 + Math.random() * 4,
     height: 14 + Math.random() * 6,
     fontSize: 1.2 + Math.random() * 0.8,
@@ -71,8 +74,8 @@ function particleStyle(p: Particle): React.CSSProperties {
   return base as React.CSSProperties;
 }
 
-function PanamaConfetti() {
-  const [particles] = useState<Particle[]>(generateParticles);
+function MatchConfetti({ flag }: { flag: string }) {
+  const [particles] = useState<Particle[]>(() => generateParticles([flag]));
 
   return createPortal(
     <div
@@ -81,7 +84,7 @@ function PanamaConfetti() {
     >
       {particles.map((p) => (
         <span key={p.id} style={particleStyle(p)}>
-          {p.isEmoji ? "🇵🇦" : ""}
+          {p.isEmoji ? p.emoji : ""}
         </span>
       ))}
     </div>,
@@ -89,39 +92,40 @@ function PanamaConfetti() {
   );
 }
 
-const MAX_CONCURRENT = 4;
+const MAX_CONCURRENT = 12;
 
-export function PanamaConfettiProvider({ children }: { children: React.ReactNode }) {
-  const [instances, setInstances] = useState<number[]>([]);
+export function ConfettiProvider({ children }: { children: React.ReactNode }) {
+  const [instances, setInstances] = useState<{ id: number; flag: string }[]>([]);
   const counterRef = useRef(0);
   const activeCountRef = useRef(0);
   const timersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
-  const trigger = useCallback(() => {
+  const trigger = useCallback((flag: string) => {
     if (activeCountRef.current >= MAX_CONCURRENT) return;
     const id = ++counterRef.current;
     activeCountRef.current++;
-    setInstances((prev) => [...prev, id]);
+    setInstances((prev) => [...prev, { id, flag }]);
     const t = setTimeout(() => {
       activeCountRef.current--;
-      setInstances((prev) => prev.filter((i) => i !== id));
+      setInstances((prev) => prev.filter((i) => i.id !== id));
       timersRef.current.delete(id);
     }, 8500);
     timersRef.current.set(id, t);
   }, []);
 
-  useEffect(() => () => {
+  useEffect(
+    () => () => {
       timersRef.current.forEach((t) => clearTimeout(t));
     },
     [],
   );
 
   return (
-    <PanamaConfettiContext.Provider value={{ trigger }}>
+    <ConfettiContext.Provider value={{ trigger }}>
       {children}
-      {instances.map((id) => (
-        <PanamaConfetti key={id} />
+      {instances.map(({ id, flag }) => (
+        <MatchConfetti key={id} flag={flag} />
       ))}
-    </PanamaConfettiContext.Provider>
+    </ConfettiContext.Provider>
   );
 }
