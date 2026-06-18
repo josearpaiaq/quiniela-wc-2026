@@ -11,10 +11,10 @@ import {
 import { createPortal } from "react-dom";
 
 type ConfettiCtx = { trigger: (flag: string) => void };
-const PanamaConfettiContext = createContext<ConfettiCtx>({ trigger: () => {} });
+const ConfettiContext = createContext<ConfettiCtx>({ trigger: () => {} });
 
-export function usePanamaConfetti() {
-  return useContext(PanamaConfettiContext);
+export function useConfetti() {
+  return useContext(ConfettiContext);
 }
 
 const CONFETTI_COLORS = ["#D21034", "#003893", "#FFFFFF", "#D21034", "#003893"];
@@ -94,7 +94,7 @@ function MatchConfetti({ flag }: { flag: string }) {
 
 const MAX_CONCURRENT = 12;
 
-export function PanamaConfettiProvider({ children }: { children: React.ReactNode }) {
+export function ConfettiProvider({ children }: { children: React.ReactNode }) {
   const [instances, setInstances] = useState<{ id: number; flag: string }[]>([]);
   const counterRef = useRef(0);
   const activeCountRef = useRef(0);
@@ -121,11 +121,11 @@ export function PanamaConfettiProvider({ children }: { children: React.ReactNode
   );
 
   return (
-    <PanamaConfettiContext.Provider value={{ trigger }}>
+    <ConfettiContext.Provider value={{ trigger }}>
       {children}
       {instances.map(({ id, flag }) => (
         <MatchConfetti key={id} flag={flag} />
       ))}
-    </PanamaConfettiContext.Provider>
+    </ConfettiContext.Provider>
   );
 }

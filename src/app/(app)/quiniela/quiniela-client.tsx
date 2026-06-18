@@ -29,7 +29,7 @@ function localDateKey(d: Date): string {
 import { isSameLocalDay } from "@/lib/format";
 import { savePrediction } from "@/lib/actions/predictions";
 import { MatchCard, type SaveStatus } from "@/components/match-card";
-import { usePanamaConfetti } from "@/components/confetti";
+import { useConfetti } from "@/components/confetti";
 
 type PhaseKey = Phase | "finals";
 
@@ -59,7 +59,7 @@ function markConfettiSeen(dateKey: string): void {
 
 
 function PanamaAutoTrigger() {
-  const { trigger } = usePanamaConfetti();
+  const { trigger } = useConfetti();
   useEffect(() => {
     const dateKey = localDateKey(new Date());
     if (PAN_MATCH_DAYS.has(dateKey) && !hasSeenConfettiToday(dateKey)) {

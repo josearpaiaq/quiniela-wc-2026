@@ -2,7 +2,7 @@
 
 import { TEAM_BY_CODE } from "@/lib/dto";
 import { Tooltip } from "./tooltip";
-import { usePanamaConfetti } from "./confetti";
+import { useConfetti } from "./confetti";
 
 export function TeamLabel({
   code,
@@ -13,7 +13,7 @@ export function TeamLabel({
   placeholder?: string;
   align?: "left" | "right";
 }) {
-  const { trigger } = usePanamaConfetti();
+  const { trigger } = useConfetti();
   const team = code ? TEAM_BY_CODE.get(code) : null;
   const alignClass = align === "right" ? "flex-row-reverse text-right" : "text-left";
   if (!team) {
