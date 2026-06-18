@@ -8,6 +8,8 @@ import { TEAM_BY_CODE, type ScoreDTO } from "@/lib/dto";
 import { formatKickoff, shortVenue } from "@/lib/format";
 import type { Phase } from "@/lib/db/seed-data";
 
+const LIVE_WINDOW_MS = 2 * 60 * 60 * 1000;
+
 export type SaveStatus = "saving" | "saved" | "error" | "pendingWinner" | null;
 
 export function MatchCard({
@@ -23,6 +25,8 @@ export function MatchCard({
   open,
   saveStatus,
   result,
+  liveScore,
+  now,
   groupPoints,
   detailsHref,
   onScore,
@@ -42,12 +46,17 @@ export function MatchCard({
   open: boolean;
   saveStatus: SaveStatus;
   result: ScoreDTO | undefined;
+  liveScore?: ScoreDTO;
+  /** client-side timestamp; omit on SSR to avoid hydration mismatch */
+  now?: number;
   groupPoints: number | null;
   /** when set (locked matches), links to the everyone's-predictions page */
   detailsHref?: string;
   onScore: (side: "home" | "away", value: number) => void;
   onWinner: (side: "home" | "away") => void;
 }) {
+  const elapsed = now !== undefined ? now - Date.parse(kickoffAt) : -1;
+  const isLive = !open && !result && elapsed >= 0 && elapsed < LIVE_WINDOW_MS;
   const isKnockout = phase !== "group";
   const isDraw = score !== undefined && score.home === score.away;
   const needsWinner = isKnockout && isDraw && open;
@@ -62,7 +71,7 @@ export function MatchCard({
       } ${open ? "border-line" : "locked-stripes border-line/70"}`}
     >
       <header className="mb-2.5 flex items-center justify-between gap-2 text-[11px] text-ink-500">
-        <span className="flex items-center gap-2">
+        <span className="flex flex-wrap items-center gap-2">
           <span className="rounded bg-pitch-700 px-1.5 py-0.5 font-mono font-semibold text-ink-300">
             {tag}
           </span>
@@ -76,6 +85,12 @@ export function MatchCard({
             </button>
           )}
           <time suppressHydrationWarning>{formatKickoff(kickoffAt)}</time>
+          {isLive && (
+            <span className="flex items-center gap-1 rounded-full bg-danger-400/15 px-1.5 py-0.5 font-bold uppercase tracking-wider text-danger-400">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-danger-400" />
+              En vivo
+            </span>
+          )}
         </span>
         <span className="font-mono">
           {saveStatus === "saving" && <span className="text-ink-500">···</span>}
@@ -142,14 +157,22 @@ export function MatchCard({
         </div>
       )}
 
-      {!open && (result || detailsHref) && (
+      {!open && (isLive || result || detailsHref) && (
         <footer className="mt-2.5 flex items-center justify-center gap-2 border-t border-line/60 pt-2 text-xs">
-          {result && (
+          {isLive && liveScore && (
+            <span className="text-ink-500">
+              En curso:{" "}
+              <span className="font-mono font-semibold text-danger-400">
+                {liveScore.home}–{liveScore.away}
+              </span>
+            </span>
+          )}
+          {!isLive && result && (
             <span className="text-ink-500">
               Real: <span className="font-mono font-semibold text-ink-100">{result.home}–{result.away}</span>
             </span>
           )}
-          {result && phase === "group" && groupPoints !== null && (
+          {!isLive && result && phase === "group" && groupPoints !== null && (
             <span
               className={`rounded-full px-2 py-0.5 font-mono font-semibold ${
                 groupPoints === 3
