@@ -29,7 +29,7 @@ function localDateKey(d: Date): string {
 import { isSameLocalDay } from "@/lib/format";
 import { savePrediction } from "@/lib/actions/predictions";
 import { MatchCard, type SaveStatus } from "@/components/match-card";
-import { PanamaConfettiProvider, usePanamaConfetti } from "@/components/panama-confetti";
+import { usePanamaConfetti } from "@/components/confetti";
 
 type PhaseKey = Phase | "finals";
 
@@ -41,16 +41,36 @@ const PAN_MATCH_DAYS = new Set(
     .map((m) => localDateKey(new Date(m.kickoffAt))),
 );
 
+const CONFETTI_SEEN_KEY = "quiniela-confetti-seen";
+
+function hasSeenConfettiToday(dateKey: string): boolean {
+  try {
+    return localStorage.getItem(CONFETTI_SEEN_KEY) === dateKey;
+  } catch {
+    return false;
+  }
+}
+
+function markConfettiSeen(dateKey: string): void {
+  try {
+    localStorage.setItem(CONFETTI_SEEN_KEY, dateKey);
+  } catch {}
+}
+
+
 function PanamaAutoTrigger() {
   const { trigger } = usePanamaConfetti();
   useEffect(() => {
-    if (PAN_MATCH_DAYS.has(localDateKey(new Date()))) {
-      trigger();
+    const dateKey = localDateKey(new Date());
+    if (PAN_MATCH_DAYS.has(dateKey) && !hasSeenConfettiToday(dateKey)) {
+      trigger("🇵🇦");
+      markConfettiSeen(dateKey);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return null;
 }
+
 
 function matchTag(match: (typeof MATCHES)[number]): React.ReactNode {
   if (match.phase === "third") return "3er puesto";
@@ -211,7 +231,7 @@ export function QuinielaClient({
   };
 
   return (
-    <PanamaConfettiProvider>
+    <>
       <PanamaAutoTrigger />
     <div className="space-y-4">
       {/* phase tabs */}
@@ -297,7 +317,7 @@ export function QuinielaClient({
         />
       )}
     </div>
-    </PanamaConfettiProvider>
+    </>
   );
 }
 
