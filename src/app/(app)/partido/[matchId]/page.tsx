@@ -36,7 +36,7 @@ async function PartidoContent({
   const selected = visibleGroups.find((g) => g.id === requested) ?? visibleGroups[0];
 
   const db = getDb();
-  const [[matchRow], userRows, resultRows, overrideRows] = await Promise.all([
+  const [[matchRow], userRows, resultRows, overrideRows, liveScoreRows] = await Promise.all([
     db
       .select({ openOverride: schema.matches.openOverride })
       .from(schema.matches)
@@ -66,6 +66,7 @@ async function PartidoContent({
       : Promise.resolve([]),
     db.select().from(schema.results),
     db.select().from(schema.knockoutOverrides),
+    db.select().from(schema.liveScores).where(eq(schema.liveScores.matchId, matchId)).limit(1),
   ]);
 
   // Anti-copy: others' picks are revealed only once the match can't be edited.
@@ -76,6 +77,7 @@ async function PartidoContent({
 
   const results = rowsToScoreMap(resultRows);
   const real = results.get(matchId);
+  const liveScore = liveScoreRows[0];
   // Slot teams are the real ones: this view compares everyone on one match.
   const slot =
     match.phase === "group"
@@ -122,9 +124,21 @@ async function PartidoContent({
           </p>
           <div className="flex items-center justify-between gap-2">
             <TeamLabel code={slot.home} />
-            <span className="font-mono text-xl font-bold">
-              {real ? `${real.home}–${real.away}` : "vs"}
-            </span>
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="font-mono text-xl font-bold">
+                {real
+                  ? `${real.home}–${real.away}`
+                  : liveScore
+                    ? `${liveScore.homeScore}–${liveScore.awayScore}`
+                    : "vs"}
+              </span>
+              {!real && liveScore && (
+                <span className="flex items-center gap-1 rounded-full bg-danger-400/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-danger-400">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-danger-400" />
+                  En vivo
+                </span>
+              )}
+            </div>
             <TeamLabel code={slot.away} align="right" />
           </div>
         </div>

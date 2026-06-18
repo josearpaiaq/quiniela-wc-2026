@@ -31,15 +31,15 @@ interface FDMatchesResponse {
   matches: FDMatch[];
 }
 
-// Fetch finished WC 2026 matches for a date range (UTC dates, "YYYY-MM-DD")
-export async function getWCFinishedMatches(
+async function fetchWCMatches(
   dateFrom: string,
   dateTo: string,
+  status: string,
 ): Promise<FDMatch[]> {
   const apiKey = process.env.FOOTBALL_DATA_API_KEY;
   if (!apiKey) throw new Error("FOOTBALL_DATA_API_KEY not configured");
 
-  const url = `${BASE}/competitions/WC/matches?dateFrom=${dateFrom}&dateTo=${dateTo}&status=FINISHED`;
+  const url = `${BASE}/competitions/WC/matches?dateFrom=${dateFrom}&dateTo=${dateTo}&status=${status}`;
   const res = await fetch(url, {
     headers: { "X-Auth-Token": apiKey },
     cache: "no-store",
@@ -52,4 +52,18 @@ export async function getWCFinishedMatches(
 
   const data: FDMatchesResponse = await res.json();
   return data.matches ?? [];
+}
+
+export async function getWCFinishedMatches(
+  dateFrom: string,
+  dateTo: string,
+): Promise<FDMatch[]> {
+  return fetchWCMatches(dateFrom, dateTo, "FINISHED");
+}
+
+export async function getWCLiveMatches(
+  dateFrom: string,
+  dateTo: string,
+): Promise<FDMatch[]> {
+  return fetchWCMatches(dateFrom, dateTo, "IN_PLAY,PAUSED");
 }

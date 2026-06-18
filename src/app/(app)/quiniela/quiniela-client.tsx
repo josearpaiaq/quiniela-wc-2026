@@ -67,10 +67,12 @@ function matchTag(match: (typeof MATCHES)[number]): React.ReactNode {
 export function QuinielaClient({
   initialPredictions,
   results,
+  liveScores,
   openOverrides,
 }: {
   initialPredictions: ScoreRecord;
   results: ScoreRecord;
+  liveScores: ScoreRecord;
   openOverrides: number[];
 }) {
   const [predictions, setPredictions] = useState<ScoreRecord>(initialPredictions);
@@ -170,6 +172,7 @@ export function QuinielaClient({
     const awayCode = match.phase === "group" ? match.away! : (slot?.away ?? null);
     const prediction = predictions[match.id];
     const real = results[match.id];
+    const live = liveScores[match.id];
     const open = isOpen(match.id, match.kickoffAt);
     return (
       <MatchCard
@@ -197,6 +200,8 @@ export function QuinielaClient({
         open={open}
         saveStatus={saveStatus[match.id] ?? null}
         result={real}
+        liveScore={live}
+        now={now}
         groupPoints={prediction && real ? groupMatchPoints(prediction, real) : null}
         detailsHref={open ? undefined : `/partido/${match.id}`}
         onScore={(side, value) => setScore(match.id, match.phase, side, value)}

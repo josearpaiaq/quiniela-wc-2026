@@ -1,6 +1,7 @@
 import { type NextRequest } from "next/server";
+import { inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { getWCFinishedMatches } from "@/lib/football-data-client";
+import { getWCFinishedMatches, getWCLiveMatches } from "@/lib/football-data-client";
 import { getDb, schema } from "@/lib/db";
 import { MATCHES } from "@/lib/db/seed-data";
 
@@ -23,11 +24,11 @@ export async function GET(request: NextRequest) {
   const today = utcDateString(now);
   const yesterday = utcDateString(new Date(now.getTime() - 86_400_000));
 
-  // One API call: all finished WC matches in a 2-day window (handles midnight games)
-  const fdMatches = await getWCFinishedMatches(yesterday, today);
-  if (fdMatches.length === 0) {
-    return Response.json({ synced: 0, skipped: 0, unmatched: 0 });
-  }
+  // Fetch finished and in-progress matches in parallel (one date window each)
+  const [fdFinished, fdLive] = await Promise.all([
+    getWCFinishedMatches(yesterday, today),
+    getWCLiveMatches(yesterday, today),
+  ]);
 
   // Build kickoff-time → seed match lookup
   const kickoffToSeedMatch = new Map<string, (typeof MATCHES)[0]>();
@@ -35,12 +36,15 @@ export async function GET(request: NextRequest) {
     kickoffToSeedMatch.set(kickoffKey(m.kickoffAt), m);
   }
 
-  // Fetch existing results so we never overwrite a human-entered result
   const db = getDb();
+
+  // Fetch existing final results so we never overwrite a human-entered result
   const existingResults = await db
     .select({ matchId: schema.results.matchId })
     .from(schema.results);
   const enteredMatchIds = new Set(existingResults.map((r) => r.matchId));
+
+  // ── FINAL RESULTS ─────────────────────────────────────────────────────────
 
   const toInsert: {
     matchId: number;
@@ -51,7 +55,7 @@ export async function GET(request: NextRequest) {
   const skipped: number[] = [];
   const unmatched: { fdId: number; utcDate: string; home: string; away: string }[] = [];
 
-  for (const fd of fdMatches) {
+  for (const fd of fdFinished) {
     const ourMatch = kickoffToSeedMatch.get(kickoffKey(fd.utcDate));
 
     if (!ourMatch) {
@@ -64,7 +68,6 @@ export async function GET(request: NextRequest) {
       continue;
     }
 
-    // Human-entered result takes priority — skip entirely
     if (enteredMatchIds.has(ourMatch.id)) {
       skipped.push(ourMatch.id);
       continue;
@@ -72,12 +75,10 @@ export async function GET(request: NextRequest) {
 
     const { fullTime, extraTime, penalties, winner } = fd.score;
 
-    // Use ET score when played (it's the cumulative score at end of ET, not just ET goals)
     const homeScore = extraTime?.home ?? fullTime.home;
     const awayScore = extraTime?.away ?? fullTime.away;
     if (homeScore === null || awayScore === null) continue;
 
-    // winnerSide only applies to knockout draws resolved by penalties
     let winnerSide: "home" | "away" | null = null;
     if (ourMatch.phase !== "group" && penalties?.home !== null) {
       winnerSide = winner === "HOME_TEAM" ? "home" : "away";
@@ -99,17 +100,66 @@ export async function GET(request: NextRequest) {
           updatedAt: new Date(),
         })),
       )
-      // Safety net: never overwrite existing results even if the check above races
       .onConflictDoNothing();
+
+    // Remove live scores for matches that just finished
+    await db
+      .delete(schema.liveScores)
+      .where(inArray(schema.liveScores.matchId, toInsert.map((r) => r.matchId)));
 
     revalidatePath("/quiniela");
     revalidatePath("/bracket");
     revalidatePath("/tabla");
     revalidatePath("/admin/resultados");
+    revalidatePath("/partido", "layout");
+  }
+
+  // ── LIVE SCORES ────────────────────────────────────────────────────────────
+
+  const liveToUpsert: { matchId: number; homeScore: number; awayScore: number; status: string }[] =
+    [];
+
+  for (const fd of fdLive) {
+    const ourMatch = kickoffToSeedMatch.get(kickoffKey(fd.utcDate));
+    if (!ourMatch) continue;
+    if (enteredMatchIds.has(ourMatch.id)) continue; // already has a final result
+
+    const homeScore = fd.score.fullTime.home;
+    const awayScore = fd.score.fullTime.away;
+    if (homeScore === null || awayScore === null) continue;
+
+    liveToUpsert.push({ matchId: ourMatch.id, homeScore, awayScore, status: fd.status });
+  }
+
+  if (liveToUpsert.length > 0) {
+    await db
+      .insert(schema.liveScores)
+      .values(
+        liveToUpsert.map((r) => ({
+          matchId: r.matchId,
+          homeScore: r.homeScore,
+          awayScore: r.awayScore,
+          status: r.status,
+          updatedAt: new Date(),
+        })),
+      )
+      .onConflictDoUpdate({
+        target: schema.liveScores.matchId,
+        set: {
+          homeScore: schema.liveScores.homeScore,
+          awayScore: schema.liveScores.awayScore,
+          status: schema.liveScores.status,
+          updatedAt: new Date(),
+        },
+      });
+
+    revalidatePath("/quiniela");
+    revalidatePath("/partido", "layout");
   }
 
   return Response.json({
     synced: toInsert.length,
+    live: liveToUpsert.length,
     skipped: skipped.length,
     unmatched: unmatched.length,
     ...(unmatched.length > 0 && { unmatchedDetails: unmatched }),
