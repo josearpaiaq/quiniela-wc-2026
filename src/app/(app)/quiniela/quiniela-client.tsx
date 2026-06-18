@@ -26,10 +26,14 @@ function localDateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+import { useRouter } from "next/navigation";
 import { isSameLocalDay } from "@/lib/format";
 import { savePrediction } from "@/lib/actions/predictions";
 import { MatchCard, type SaveStatus } from "@/components/match-card";
 import { useConfetti } from "@/components/confetti";
+
+const LIVE_WINDOW_MS = 2 * 60 * 60 * 1000;
+const LIVE_POLL_MS = 60_000;
 
 type PhaseKey = Phase | "finals";
 
@@ -130,6 +134,30 @@ export function QuinielaClient({
 
   // captured once per mount: lock display is advisory, the server re-validates
   const [now] = useState(() => Date.now());
+
+  const router = useRouter();
+
+  // Poll for live score updates while any match is in progress
+  useEffect(() => {
+    const hasLiveMatch = () =>
+      MATCHES.some((m) => {
+        if (results[m.id]) return false;
+        const elapsed = Date.now() - Date.parse(m.kickoffAt);
+        return elapsed >= 0 && elapsed < LIVE_WINDOW_MS;
+      });
+
+    if (!hasLiveMatch()) return;
+
+    const id = setInterval(() => {
+      if (hasLiveMatch()) {
+        router.refresh();
+      } else {
+        clearInterval(id);
+      }
+    }, LIVE_POLL_MS);
+
+    return () => clearInterval(id);
+  }, [results, router]);
 
   // client-only: "today" depends on the viewer's timezone, so skip it on the
   // server render to avoid a hydration mismatch around midnight / other TZs
