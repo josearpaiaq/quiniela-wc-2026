@@ -9,7 +9,7 @@ async function QuinielaContent() {
   const session = await requireUser();
   const db = getDb();
 
-  const [overrideRows, predictionRows, resultRows, liveScoreRows] = await Promise.all([
+  const [overrideRows, predictionRows, resultRows] = await Promise.all([
     db
       .select({ id: schema.matches.id })
       .from(schema.matches)
@@ -19,7 +19,6 @@ async function QuinielaContent() {
       .from(schema.predictions)
       .where(eq(schema.predictions.userId, session.sub)),
     db.select().from(schema.results),
-    db.select().from(schema.liveScores),
   ]);
 
   const initialPredictions: ScoreRecord = {};
@@ -40,16 +39,10 @@ async function QuinielaContent() {
     };
   }
 
-  const liveScores: ScoreRecord = {};
-  for (const row of liveScoreRows) {
-    liveScores[row.matchId] = { home: row.homeScore, away: row.awayScore, winnerSide: null };
-  }
-
   return (
     <QuinielaClient
       initialPredictions={initialPredictions}
       results={results}
-      liveScores={liveScores}
       openOverrides={overrideRows.map((r) => r.id)}
     />
   );

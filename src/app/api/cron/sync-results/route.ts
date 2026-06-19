@@ -1,7 +1,6 @@
 import { type NextRequest } from "next/server";
-import { inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { getWCFinishedMatches, getWCLiveMatches } from "@/lib/football-data-client";
+import { getWCFinishedMatches } from "@/lib/football-data-client";
 import { getDb, schema } from "@/lib/db";
 import { MATCHES } from "@/lib/db/seed-data";
 
@@ -24,11 +23,7 @@ export async function GET(request: NextRequest) {
   const today = utcDateString(now);
   const yesterday = utcDateString(new Date(now.getTime() - 86_400_000));
 
-  // Fetch finished and in-progress matches in parallel (one date window each)
-  const [fdFinished, fdLive] = await Promise.all([
-    getWCFinishedMatches(yesterday, today),
-    getWCLiveMatches(yesterday, today),
-  ]);
+  const fdFinished = await getWCFinishedMatches(yesterday, today);
 
   // Build kickoff-time → seed match lookup
   const kickoffToSeedMatch = new Map<string, (typeof MATCHES)[0]>();
@@ -102,11 +97,6 @@ export async function GET(request: NextRequest) {
       )
       .onConflictDoNothing();
 
-    // Remove live scores for matches that just finished
-    await db
-      .delete(schema.liveScores)
-      .where(inArray(schema.liveScores.matchId, toInsert.map((r) => r.matchId)));
-
     revalidatePath("/quiniela");
     revalidatePath("/bracket");
     revalidatePath("/tabla");
@@ -114,52 +104,8 @@ export async function GET(request: NextRequest) {
     revalidatePath("/partido", "layout");
   }
 
-  // ── LIVE SCORES ────────────────────────────────────────────────────────────
-
-  const liveToUpsert: { matchId: number; homeScore: number; awayScore: number; status: string }[] =
-    [];
-
-  for (const fd of fdLive) {
-    const ourMatch = kickoffToSeedMatch.get(kickoffKey(fd.utcDate));
-    if (!ourMatch) continue;
-    if (enteredMatchIds.has(ourMatch.id)) continue; // already has a final result
-
-    const homeScore = fd.score.fullTime.home;
-    const awayScore = fd.score.fullTime.away;
-    if (homeScore === null || awayScore === null) continue;
-
-    liveToUpsert.push({ matchId: ourMatch.id, homeScore, awayScore, status: fd.status });
-  }
-
-  if (liveToUpsert.length > 0) {
-    await db
-      .insert(schema.liveScores)
-      .values(
-        liveToUpsert.map((r) => ({
-          matchId: r.matchId,
-          homeScore: r.homeScore,
-          awayScore: r.awayScore,
-          status: r.status,
-          updatedAt: new Date(),
-        })),
-      )
-      .onConflictDoUpdate({
-        target: schema.liveScores.matchId,
-        set: {
-          homeScore: schema.liveScores.homeScore,
-          awayScore: schema.liveScores.awayScore,
-          status: schema.liveScores.status,
-          updatedAt: new Date(),
-        },
-      });
-
-    revalidatePath("/quiniela");
-    revalidatePath("/partido", "layout");
-  }
-
   return Response.json({
     synced: toInsert.length,
-    live: liveToUpsert.length,
     skipped: skipped.length,
     unmatched: unmatched.length,
     ...(unmatched.length > 0 && { unmatchedDetails: unmatched }),
