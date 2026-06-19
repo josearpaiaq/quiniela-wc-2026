@@ -60,10 +60,3 @@ export async function getWCFinishedMatches(
 ): Promise<FDMatch[]> {
   return fetchWCMatches(dateFrom, dateTo, "FINISHED");
 }
-
-export async function getWCLiveMatches(
-  dateFrom: string,
-  dateTo: string,
-): Promise<FDMatch[]> {
-  return fetchWCMatches(dateFrom, dateTo, "IN_PLAY,PAUSED");
-}
