@@ -87,15 +87,6 @@ export const results = pgTable("results", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-// in-progress score synced by cron while a match is running; deleted on final result insert
-export const liveScores = pgTable("live_scores", {
-  matchId: smallint("match_id").primaryKey().references(() => matches.id),
-  homeScore: smallint("home_score").notNull(),
-  awayScore: smallint("away_score").notNull(),
-  status: text("status").notNull(), // "IN_PLAY" | "PAUSED"
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
-
 // manual admin correction of the real bracket when derivation differs from FIFA
 export const knockoutOverrides = pgTable("knockout_overrides", {
   matchId: smallint("match_id")

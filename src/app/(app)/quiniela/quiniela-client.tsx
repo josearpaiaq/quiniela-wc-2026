@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, forwardRef, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { Fragment, forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, Trophy } from "lucide-react";
 import { parseAsString, parseAsStringLiteral, useQueryState, useQueryStates } from "nuqs";
 import { MATCHES, type GroupLetter, type Phase } from "@/lib/db/seed-data";
@@ -26,14 +26,10 @@ function localDateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-import { useRouter } from "next/navigation";
 import { isSameLocalDay } from "@/lib/format";
 import { savePrediction } from "@/lib/actions/predictions";
 import { MatchCard, type SaveStatus } from "@/components/match-card";
 import { useConfetti } from "@/components/confetti";
-
-const LIVE_WINDOW_MS = 2 * 60 * 60 * 1000;
-const LIVE_POLL_MS = 60_000;
 
 type PhaseKey = Phase | "finals";
 
@@ -91,12 +87,10 @@ function matchTag(match: (typeof MATCHES)[number]): React.ReactNode {
 export function QuinielaClient({
   initialPredictions,
   results,
-  liveScores,
   openOverrides,
 }: {
   initialPredictions: ScoreRecord;
   results: ScoreRecord;
-  liveScores: ScoreRecord;
   openOverrides: number[];
 }) {
   const [predictions, setPredictions] = useState<ScoreRecord>(initialPredictions);
@@ -135,29 +129,9 @@ export function QuinielaClient({
   // captured once per mount: lock display is advisory, the server re-validates
   const [now] = useState(() => Date.now());
 
-  const router = useRouter();
-
-  // Poll for live score updates while any match is in progress
-  useEffect(() => {
-    const hasLiveMatch = () =>
-      MATCHES.some((m) => {
-        if (results[m.id]) return false;
-        const elapsed = Date.now() - Date.parse(m.kickoffAt);
-        return elapsed >= 0 && elapsed < LIVE_WINDOW_MS;
-      });
-
-    if (!hasLiveMatch()) return;
-
-    const id = setInterval(() => {
-      if (hasLiveMatch()) {
-        router.refresh();
-      } else {
-        clearInterval(id);
-      }
-    }, LIVE_POLL_MS);
-
-    return () => clearInterval(id);
-  }, [results, router]);
+  // track tab in a ref so renderCard's useCallback doesn't depend on it
+  const tabRef = useRef(tab);
+  useEffect(() => { tabRef.current = tab; }, [tab]);
 
   // client-only: "today" depends on the viewer's timezone, so skip it on the
   // server render to avoid a hydration mismatch around midnight / other TZs
@@ -166,9 +140,6 @@ export function QuinielaClient({
     () => true,
     () => false,
   );
-  const isOpen = (matchId: number, kickoffAt: string) =>
-    overrides.has(matchId) || now < Date.parse(kickoffAt);
-
   function scheduleSave(matchId: number, next: ScoreDTO, phase: Phase) {
     const isKnockout = phase !== "group";
     const needsWinner = isKnockout && next.home === next.away && !next.winnerSide;
@@ -214,14 +185,13 @@ export function QuinielaClient({
     scheduleSave(matchId, next, phase);
   }
 
-  const renderCard = (match: (typeof MATCHES)[number], tag: React.ReactNode) => {
+  const renderCard = useCallback((match: (typeof MATCHES)[number], tag: React.ReactNode) => {
     const slot = match.phase === "group" ? null : bracket.get(match.id);
     const homeCode = match.phase === "group" ? match.home! : (slot?.home ?? null);
     const awayCode = match.phase === "group" ? match.away! : (slot?.away ?? null);
     const prediction = predictions[match.id];
     const real = results[match.id];
-    const live = liveScores[match.id];
-    const open = isOpen(match.id, match.kickoffAt);
+    const open = overrides.has(match.id) || now < Date.parse(match.kickoffAt);
     return (
       <MatchCard
         key={match.id}
@@ -234,7 +204,7 @@ export function QuinielaClient({
           match.phase === "group" && match.group
             ? () => {
               setNav({ tab: "group", group: match.group as GroupLetter });
-              if (tab === "group") {
+              if (tabRef.current === "group") {
                 requestAnimationFrame(() => {
                   groupsPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
                 });
@@ -248,15 +218,13 @@ export function QuinielaClient({
         open={open}
         saveStatus={saveStatus[match.id] ?? null}
         result={real}
-        liveScore={live}
-        now={now}
         groupPoints={prediction && real ? groupMatchPoints(prediction, real) : null}
         detailsHref={open ? undefined : `/partido/${match.id}`}
         onScore={(side, value) => setScore(match.id, match.phase, side, value)}
         onWinner={(side) => setWinner(match.id, match.phase, side)}
       />
     );
-  };
+  }, [bracket, predictions, results, overrides, now, saveStatus, setNav]);
 
   return (
     <>
@@ -370,9 +338,21 @@ const GroupsPanel = forwardRef<HTMLDivElement, {
   );
   const activeMap = view === "mine" ? scoreMap : realScoreMap;
   const standings = useMemo(() => computeGroupStandings(group, activeMap), [group, activeMap]);
-  const matches = MATCHES.filter((m) => m.phase === "group" && m.group === group).sort(
-    (a, b) => Date.parse(a.kickoffAt) - Date.parse(b.kickoffAt),
+  const matches = useMemo(
+    () => MATCHES.filter((m) => m.phase === "group" && m.group === group).sort(
+      (a, b) => Date.parse(a.kickoffAt) - Date.parse(b.kickoffAt),
+    ),
+    [group],
   );
+  const filledByGroup = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const letter of GROUP_LETTERS) {
+      map[letter] = MATCHES.filter(
+        (m) => m.phase === "group" && m.group === letter && predictions[m.id] !== undefined,
+      ).length;
+    }
+    return map;
+  }, [predictions]);
   const hasRealResults = matches.some((m) => realScoreMap.has(m.id));
 
   return (
@@ -381,9 +361,7 @@ const GroupsPanel = forwardRef<HTMLDivElement, {
       <div className="-mx-4 overflow-x-auto px-4 py-2">
         <div className="flex gap-1.5 pb-1">
           {GROUP_LETTERS.map((letter) => {
-            const filled = MATCHES.filter(
-              (m) => m.phase === "group" && m.group === letter && predictions[m.id] !== undefined,
-            ).length;
+            const filled = filledByGroup[letter] ?? 0;
             const active = group === letter;
             return (
               <button
@@ -496,9 +474,12 @@ function KnockoutPanel({
   tab: PhaseKey;
   renderCard: (match: (typeof MATCHES)[number], tag: React.ReactNode) => React.ReactNode;
 }) {
-  const matches = MATCHES.filter((m) =>
-    tab === "finals" ? m.phase === "third" || m.phase === "final" : m.phase === tab,
-  ).sort((a, b) => a.id - b.id);
+  const matches = useMemo(
+    () => MATCHES.filter((m) =>
+      tab === "finals" ? m.phase === "third" || m.phase === "final" : m.phase === tab,
+    ).sort((a, b) => a.id - b.id),
+    [tab],
+  );
 
   return (
     <div className="space-y-3">
@@ -511,7 +492,7 @@ function KnockoutPanel({
   );
 }
 
-function DayMatchesPanel({
+const DayMatchesPanel = memo(function DayMatchesPanel({
   now,
   renderCard,
 }: {
@@ -662,7 +643,7 @@ function DayMatchesPanel({
       )}
     </div>
   );
-}
+});
 
 function provisionalThirds(
   scoreMap: Map<number, { home: number; away: number }>,
@@ -817,12 +798,15 @@ function BracketPendingPanel({
   predictions: ScoreRecord;
   onGoToGroup: (g: GroupLetter) => void;
 }) {
-  const missingByGroup = GROUP_LETTERS.map((letter) => ({
-    letter,
-    missing: MATCHES.filter(
-      (m) => m.phase === "group" && m.group === letter && predictions[m.id] === undefined,
-    ).length,
-  })).filter((g) => g.missing > 0);
+  const missingByGroup = useMemo(
+    () => GROUP_LETTERS.map((letter) => ({
+      letter,
+      missing: MATCHES.filter(
+        (m) => m.phase === "group" && m.group === letter && predictions[m.id] === undefined,
+      ).length,
+    })).filter((g) => g.missing > 0),
+    [predictions],
+  );
 
   return (
     <div className="rounded-xl border border-dashed border-line-bright bg-pitch-900/60 px-5 py-8 text-center">
