@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { requireAdmin } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
 import { overrideRowsToMap, rowsToScoreMap, scoreMapToRecord } from "@/lib/score-rows";
@@ -44,10 +43,4 @@ async function AdminResultadosContent() {
   );
 }
 
-export default function AdminResultadosPage() {
-  return (
-    <Suspense fallback={null}>
-      <AdminResultadosContent />
-    </Suspense>
-  );
-}
+export default AdminResultadosContent;

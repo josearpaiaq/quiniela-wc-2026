@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { eq } from "drizzle-orm";
 import { requireUser } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
@@ -48,10 +47,4 @@ async function QuinielaContent() {
   );
 }
 
-export default function QuinielaPage() {
-  return (
-    <Suspense fallback={null}>
-      <QuinielaContent />
-    </Suspense>
-  );
-}
+export default QuinielaContent;

@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { eq, inArray } from "drizzle-orm";
 import Link from "next/link";
 import { ArrowRight, Medal } from "lucide-react";
@@ -173,10 +172,4 @@ async function TablaContent({
   );
 }
 
-export default function TablaPage(props: { searchParams: Promise<{ grupo?: string | string[] }> }) {
-  return (
-    <Suspense fallback={null}>
-      <TablaContent {...props} />
-    </Suspense>
-  );
-}
+export default TablaContent;

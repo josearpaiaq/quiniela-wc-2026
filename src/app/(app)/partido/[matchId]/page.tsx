@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { and, eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -215,13 +214,4 @@ async function PartidoContent({
   );
 }
 
-export default function PartidoPage(props: {
-  params: Promise<{ matchId: string }>;
-  searchParams: Promise<{ grupo?: string | string[] }>;
-}) {
-  return (
-    <Suspense fallback={null}>
-      <PartidoContent {...props} />
-    </Suspense>
-  );
-}
+export default PartidoContent;

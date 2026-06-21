@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { eq } from "drizzle-orm";
 import { requireUser } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
@@ -37,10 +36,4 @@ async function BracketContent() {
   );
 }
 
-export default function BracketPage() {
-  return (
-    <Suspense fallback={null}>
-      <BracketContent />
-    </Suspense>
-  );
-}
+export default BracketContent;
