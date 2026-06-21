@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Chivo, Chivo_Mono } from "next/font/google";
+import { ThemeProvider } from "next-themes";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { TooltipProvider } from "@/components/tooltip";
 import "./globals.css";
@@ -29,7 +30,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#050d09",
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#050d09" },
+    { media: "(prefers-color-scheme: light)", color: "#f0f7ec" },
+  ],
 };
 
 export default function RootLayout({
@@ -38,13 +42,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <body
         className={`${bricolage.variable} ${chivo.variable} ${chivoMono.variable} font-sans antialiased`}
       >
-        <NuqsAdapter>
-          <TooltipProvider>{children}</TooltipProvider>
-        </NuqsAdapter>
+        <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange>
+          <NuqsAdapter>
+            <TooltipProvider>{children}</TooltipProvider>
+          </NuqsAdapter>
+        </ThemeProvider>
       </body>
     </html>
   );

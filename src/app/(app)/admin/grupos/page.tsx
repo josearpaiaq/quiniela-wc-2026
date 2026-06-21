@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { asc, eq } from "drizzle-orm";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
@@ -105,10 +104,4 @@ async function AdminGruposContent() {
   );
 }
 
-export default function AdminGruposPage() {
-  return (
-    <Suspense fallback={null}>
-      <AdminGruposContent />
-    </Suspense>
-  );
-}
+export default AdminGruposContent;

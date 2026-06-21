@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { asc } from "drizzle-orm";
 import { requireAdmin } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
@@ -59,10 +58,4 @@ async function AdminUsuariosContent() {
   );
 }
 
-export default function AdminUsuariosPage() {
-  return (
-    <Suspense fallback={null}>
-      <AdminUsuariosContent />
-    </Suspense>
-  );
-}
+export default AdminUsuariosContent;
