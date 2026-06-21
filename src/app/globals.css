@@ -28,6 +28,24 @@
   --font-mono: var(--font-chivo-mono), monospace;
 }
 
+@layer base {
+  .light {
+    --color-pitch-950: #f0f7ec;
+    --color-pitch-900: #e0f0d8;
+    --color-pitch-800: #c8e0bc;
+    --color-pitch-700: #a8cc98;
+    --color-pitch-600: #84b470;
+    --color-line: #c2ddb5;
+    --color-line-bright: #8fbd78;
+    --color-ink-100: #1a3a12;
+    --color-ink-300: #2e6020;
+    --color-ink-500: #4a7040;
+    --color-volt-500: #2e7a10;
+    --color-volt-400: #3a9412;
+    --color-volt-300: #4baf18;
+  }
+}
+
 body {
   background-color: var(--color-pitch-950);
   color: var(--color-ink-100);
@@ -37,6 +55,13 @@ body {
     radial-gradient(40rem 40rem at 50% 120%, rgba(255, 198, 63, 0.04), transparent 60%);
   background-attachment: fixed;
   min-height: 100dvh;
+}
+
+.light body {
+  background-image:
+    radial-gradient(60rem 40rem at 85% -10%, rgba(109, 168, 92, 0.10), transparent 60%),
+    radial-gradient(50rem 35rem at -15% 25%, rgba(109, 168, 92, 0.07), transparent 55%),
+    radial-gradient(40rem 40rem at 50% 120%, rgba(255, 198, 63, 0.06), transparent 60%);
 }
 
 /* faint grain so flat panels feel like a broadcast frame */
@@ -53,6 +78,23 @@ body::before {
 ::selection {
   background: var(--color-volt-400);
   color: var(--color-pitch-950);
+}
+
+@keyframes shimmer {
+  from { background-position: 200% center; }
+  to   { background-position: -200% center; }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-pitch-800) 25%,
+    var(--color-pitch-700) 50%,
+    var(--color-pitch-800) 75%
+  );
+  background-size: 200% auto;
+  animation: shimmer 1.6s linear infinite;
+  border-radius: 6px;
 }
 
 @keyframes rise-in {
