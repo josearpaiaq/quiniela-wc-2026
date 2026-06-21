@@ -129,15 +129,27 @@ export function allGroupsComplete(scores: ScoreMap): boolean {
 }
 
 /**
- * Ranking of third-placed teams (spec §2): points, GD, GF, then group letter.
+ * Ranking of third-placed teams (FIFA WC 2026 regulations):
+ * points → GD → GF → wins → draw position (proxy for disciplinary/FIFA ranking).
  * Only meaningful once all 12 groups are complete; returns null before that.
+ *
+ * TODO: once the group stage ends, verify final ranking against football-data.org
+ * API and override if needed (discipline + FIFA ranking are not tracked here).
  */
 export function rankThirds(scores: ScoreMap): ThirdRow[] | null {
   if (!allGroupsComplete(scores)) return null;
   const thirds = GROUP_LETTERS.map((g) => computeGroupStandings(g, scores)[2]);
+
+  const winsOf = (row: StandingRow) => row.won;
+  const drawPos = (row: StandingRow) => drawPositionByCode.get(row.code) ?? 999;
+
   thirds.sort(
     (a, b) =>
-      b.points - a.points || b.gd - a.gd || b.gf - a.gf || a.group.localeCompare(b.group),
+      b.points - a.points ||
+      b.gd - a.gd ||
+      b.gf - a.gf ||
+      winsOf(b) - winsOf(a) ||
+      drawPos(a) - drawPos(b),
   );
   return thirds.map((row, index) => ({
     code: row.code,
