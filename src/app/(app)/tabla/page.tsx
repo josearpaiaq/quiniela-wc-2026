@@ -132,8 +132,10 @@ async function TablaContent({
                 } ${index === 0 ? "shadow-[0_0_30px_rgba(255,198,63,0.08)]" : ""}`}
               >
                 <span className="flex w-8 justify-center font-display text-lg font-extrabold">
-                  {medalColor ? (
-                    <Medal aria-label={`puesto ${index + 1}`} className={`h-5 w-5 ${medalColor}`} />
+                  {index === 0 ? (
+                    <Medal aria-label="puesto 1" className="h-5 w-5 text-gold-400" />
+                  ) : medalColor ? (
+                    <span className={medalColor}>{index + 1}</span>
                   ) : (
                     <span className="text-ink-500">{index + 1}</span>
                   )}

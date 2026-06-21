@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -22,7 +21,7 @@ const ROUND_LABELS: Record<ScoredRound, string> = {
   champion: "Campeón",
 };
 
-async function QuinielaAjenaContent({
+export default async function QuinielaAjenaPage({
   params,
 }: {
   params: Promise<{ userId: string }>;
@@ -213,10 +212,3 @@ async function QuinielaAjenaContent({
   );
 }
 
-export default function QuinielaAjenaPage(props: { params: Promise<{ userId: string }> }) {
-  return (
-    <Suspense fallback={null}>
-      <QuinielaAjenaContent {...props} />
-    </Suspense>
-  );
-}
