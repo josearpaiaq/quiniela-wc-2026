@@ -9,8 +9,6 @@ import { overrideRowsToMap, rowsToScoreMap } from "@/lib/score-rows";
 import { scoreUser, type Score } from "@/lib/tournament";
 import { JoinGroupForm } from "./join-group-form";
 
-const MEDAL_COLORS = ["text-gold-400", "text-ink-300", "text-[#cd7f32]"];
-
 async function TablaContent({
   searchParams,
 }: {
@@ -122,7 +120,6 @@ async function TablaContent({
       <ol className="space-y-2">
         {standings.map(({ user, score, filled }, index) => {
           const isMe = user.id === session.sub;
-          const medalColor = MEDAL_COLORS[index];
           return (
             <li key={user.id}>
               <Link
@@ -134,8 +131,6 @@ async function TablaContent({
                 <span className="flex w-8 justify-center font-display text-lg font-extrabold">
                   {index === 0 ? (
                     <Medal aria-label="puesto 1" className="h-5 w-5 text-gold-400" />
-                  ) : medalColor ? (
-                    <span className={medalColor}>{index + 1}</span>
                   ) : (
                     <span className="text-ink-500">{index + 1}</span>
                   )}
