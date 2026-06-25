@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
 import { getVisibleGroups } from "@/lib/groups";
 import { overrideRowsToMap, rowsToScoreMap } from "@/lib/score-rows";
-import { scoreUser, type Score } from "@/lib/tournament";
+import { GROUP_EXACT_POINTS, scoreUser, type Score } from "@/lib/tournament";
 import { JoinGroupForm } from "./join-group-form";
 
 async function TablaContent({
@@ -83,12 +83,16 @@ async function TablaContent({
   const standings = users
     .map((user) => {
       const score = scoreUser(byUser.get(user.id) ?? new Map(), results, overrides);
-      return { user, score, filled: byUser.get(user.id)?.size ?? 0 };
+      const exactos = [...score.groupPointsByMatch.values()].filter(
+        (v) => v === GROUP_EXACT_POINTS,
+      ).length;
+      return { user, score, filled: byUser.get(user.id)?.size ?? 0, exactos };
     })
     .sort(
       (a, b) =>
         b.score.total - a.score.total ||
         b.score.groupPoints - a.score.groupPoints ||
+        b.exactos - a.exactos ||
         a.user.displayName.localeCompare(b.user.displayName),
     );
 
@@ -118,7 +122,7 @@ async function TablaContent({
       )}
 
       <ol className="space-y-2">
-        {standings.map(({ user, score, filled }, index) => {
+        {standings.map(({ user, score, filled, exactos }, index) => {
           const isMe = user.id === session.sub;
           return (
             <li key={user.id}>
@@ -146,7 +150,7 @@ async function TablaContent({
                 </span>
                 <span className="text-right">
                   <span className="block font-mono text-[11px] text-ink-500">
-                    G {score.groupPoints} · Av {score.advancePoints}
+                    G {score.groupPoints} · Av {score.advancePoints} · ✓{exactos}
                   </span>
                   <span className="block font-mono text-xl font-bold text-volt-400">
                     {score.total}
