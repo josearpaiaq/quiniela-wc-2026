@@ -30,19 +30,22 @@
 
 @layer base {
   .light {
-    --color-pitch-950: #f0f7ec;
-    --color-pitch-900: #e0f0d8;
-    --color-pitch-800: #c8e0bc;
-    --color-pitch-700: #a8cc98;
-    --color-pitch-600: #84b470;
-    --color-line: #c2ddb5;
-    --color-line-bright: #8fbd78;
-    --color-ink-100: #1a3a12;
-    --color-ink-300: #2e6020;
-    --color-ink-500: #4a7040;
-    --color-volt-500: #2e7a10;
-    --color-volt-400: #3a9412;
-    --color-volt-300: #4baf18;
+    --color-pitch-950: #ecf3f8;
+    --color-pitch-900: #d8eaf5;
+    --color-pitch-800: #bcd5ec;
+    --color-pitch-700: #94bcdf;
+    --color-pitch-600: #6a9fce;
+    --color-line: #b0cfe0;
+    --color-line-bright: #7aafd0;
+    --color-ink-100: #0d2a3d;
+    --color-ink-300: #1a5070;
+    --color-ink-500: #2e6e8c;
+    --color-volt-500: #0c5a8c;
+    --color-volt-400: #1270a8;
+    --color-volt-300: #188ec4;
+
+    --color-gold-500: #0d4a8a;
+    --color-gold-400: #1260a4;
   }
 }
 
@@ -59,8 +62,8 @@ body {
 
 .light body {
   background-image:
-    radial-gradient(60rem 40rem at 85% -10%, rgba(109, 168, 92, 0.10), transparent 60%),
-    radial-gradient(50rem 35rem at -15% 25%, rgba(109, 168, 92, 0.07), transparent 55%),
+    radial-gradient(60rem 40rem at 85% -10%, rgba(92, 148, 209, 0.10), transparent 60%),
+    radial-gradient(50rem 35rem at -15% 25%, rgba(92, 148, 209, 0.07), transparent 55%),
     radial-gradient(40rem 40rem at 50% 120%, rgba(255, 198, 63, 0.06), transparent 60%);
 }
 
