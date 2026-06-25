@@ -119,25 +119,27 @@ export default async function QuinielaAjenaPage({
             const data = score.advanceByRound.get(round);
             if (!data) return null;
             return (
-              <div key={round} className="flex items-start justify-between gap-3 text-sm">
-                <span className="shrink-0 text-ink-500">
-                  {ROUND_LABELS[round]}
-                  <span className="ml-1.5 font-mono text-[10px]">×{ROUND_VALUES[round]}</span>
-                </span>
-                <span className="flex flex-wrap justify-end gap-1">
-                  {data.hits.length === 0 ? (
-                    <span className="text-xs text-ink-500/60">—</span>
-                  ) : (
-                    data.hits.map((code) => (
-                      <span key={code} title={TEAM_BY_CODE.get(code)?.name} aria-hidden>
+              <div key={round} className="flex flex-col text-sm">
+                <div className="flex justify-between gap-3 text-sm">
+                  <span className="shrink-0 text-ink-500">
+                    {ROUND_LABELS[round]}
+                    <span className="ml-1.5 font-mono text-[10px]">×{ROUND_VALUES[round]}</span>
+                  </span>
+                  <span className="flex justify-end gap-1">
+                    <span className="ml-1 font-mono text-xs font-semibold text-volt-400">
+                      +{data.points}
+                    </span>
+                  </span>
+                </div>
+                <div className="flex justify-end flex-wrap gap-1">
+                  {data.hits.map((code) => (
+                    <div key={code}>
+                      <span title={TEAM_BY_CODE.get(code)?.name} aria-hidden>
                         {TEAM_BY_CODE.get(code)?.flag}
                       </span>
-                    ))
-                  )}
-                  <span className="ml-1 font-mono text-xs font-semibold text-volt-400">
-                    +{data.points}
-                  </span>
-                </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             );
           })}
