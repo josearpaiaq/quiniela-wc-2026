@@ -1,20 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "crons": [
-    { "path": "/api/cron/sync-results", "schedule": "15 15 * * *" },
-    { "path": "/api/cron/sync-results", "schedule": "15 16 * * *" },
-    { "path": "/api/cron/sync-results", "schedule": "15 17 * * *" },
-    { "path": "/api/cron/sync-results", "schedule": "15 18 * * *" },
-    { "path": "/api/cron/sync-results", "schedule": "15 19 * * *" },
-    { "path": "/api/cron/sync-results", "schedule": "15 20 * * *" },
-    { "path": "/api/cron/sync-results", "schedule": "15 21 * * *" },
-    { "path": "/api/cron/sync-results", "schedule": "15 22 * * *" },
-    { "path": "/api/cron/sync-results", "schedule": "15 23 * * *" },
-    { "path": "/api/cron/sync-results", "schedule": "15 0 * * *" },
-    { "path": "/api/cron/sync-results", "schedule": "15 1 * * *" },
-    { "path": "/api/cron/sync-results", "schedule": "15 2 * * *" },
-    { "path": "/api/cron/sync-results", "schedule": "15 3 * * *" },
-    { "path": "/api/cron/sync-results", "schedule": "15 4 * * *" },
-    { "path": "/api/cron/sync-results", "schedule": "15 5 * * *" }
+    { "path": "/api/cron/sync-results", "schedule": "0 5 * * *" }
   ]
 }
