@@ -1,7 +1,6 @@
 "use server";
 
 import { eq } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
 import { requireUser } from "../auth/session";
 import { getDb, schema } from "../db";
 import { isMatchOpen, normalizeWinnerSide, predictionInputSchema } from "../rules";
@@ -50,8 +49,5 @@ export async function savePrediction(input: unknown): Promise<SaveResult> {
       },
     });
 
-  revalidatePath("/quiniela");
-  revalidatePath("/bracket");
-  revalidatePath("/tabla");
   return { ok: true };
 }
