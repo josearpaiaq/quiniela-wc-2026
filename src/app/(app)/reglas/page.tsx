@@ -1,6 +1,8 @@
 import {
+  ALL_KNOCKOUT_SCORED_MATCH_IDS,
   GROUP_EXACT_POINTS,
   GROUP_OUTCOME_POINTS,
+  KNOCKOUT_EXACT_POINTS,
 } from "@/lib/tournament/scoring";
 import { ROUND_VALUES } from "@/lib/tournament/types";
 
@@ -56,12 +58,11 @@ export default function ReglasPage() {
       {/* Knockout rounds */}
       <section className="space-y-3">
         <h3 className="text-xs font-semibold uppercase tracking-widest text-ink-500">
-          Eliminación directa · rondas
+          Eliminación directa · avance de equipos
         </h3>
         <p className="text-sm text-ink-400">
-          Para los partidos de eliminación no se puntúa el marcador. En cambio, ganas puntos
-          por cada <strong className="text-ink-200">equipo</strong> que predijiste que avanzaría
-          a esa ronda — sin importar en qué posición del bracket quedó.
+          Ganas puntos por cada <strong className="text-ink-200">equipo</strong> que predijiste
+          que avanzaría a esa ronda — sin importar en qué posición del bracket quedó.
         </p>
         <div className="divide-y divide-line overflow-hidden rounded-xl border border-line">
           {KNOCKOUT_ROUNDS.map((round) => (
@@ -93,6 +94,36 @@ export default function ReglasPage() {
         </p>
       </section>
 
+      {/* Knockout exact score */}
+      <section className="space-y-3">
+        <h3 className="text-xs font-semibold uppercase tracking-widest text-ink-500">
+          Eliminación directa · marcador exacto
+        </h3>
+        <p className="text-sm text-ink-400">
+          Adicionalmente, si aciertas el <strong className="text-ink-200">marcador exacto</strong>{" "}
+          de un partido de eliminación directa (incluyendo prórroga si la hay), ganas puntos extra
+          por ese partido — independientes de los puntos por avance de equipos.
+        </p>
+        <div className="divide-y divide-line overflow-hidden rounded-xl border border-line">
+          <ScoreRow
+            label="Marcador exacto"
+            description="Acertaste el resultado al final del partido (90' o 120' con prórroga)"
+            example="Pronosticaste 2-1, terminó 2-1 tras prórroga"
+            points={KNOCKOUT_EXACT_POINTS}
+          />
+          <ScoreRow
+            label="Marcador incorrecto"
+            description="El resultado final no coincide con tu pronóstico"
+            example="Pronosticaste 2-1, terminó 1-1 (penales)"
+            points={0}
+          />
+        </div>
+        <p className="px-1 text-[11px] text-ink-500">
+          Nota: los penales no cuentan en el marcador. Si predijiste 1-1 y el partido termina
+          1-1 tras 90' (o 120') y se define en penales, tu marcador se considera exacto.
+        </p>
+      </section>
+
       {/* Max points */}
       <section className="rounded-xl border border-volt-400/30 bg-volt-400/5 px-4 py-4">
         <p className="text-xs font-semibold uppercase tracking-widest text-volt-400">
@@ -105,12 +136,14 @@ export default function ReglasPage() {
             8 * ROUND_VALUES.qf +
             4 * ROUND_VALUES.sf +
             2 * ROUND_VALUES.final +
-            ROUND_VALUES.champion}{" "}
+            ROUND_VALUES.champion +
+            ALL_KNOCKOUT_SCORED_MATCH_IDS.length * KNOCKOUT_EXACT_POINTS}{" "}
           <span className="text-sm font-normal text-ink-400">puntos</span>
         </p>
         <p className="mt-1 text-[11px] text-ink-500">
-          Si acertaras el marcador exacto de los 72 partidos de grupos y todos los avances de
-          eliminación.
+          Si acertaras el marcador exacto de los 72 partidos de grupos, todos los avances de
+          eliminación y el marcador exacto de los {ALL_KNOCKOUT_SCORED_MATCH_IDS.length} partidos
+          de eliminación directa.
         </p>
       </section>
     </div>

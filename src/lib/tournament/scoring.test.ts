@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { MATCHES } from "../db/seed-data";
-import { groupMatchPoints, scoreUser } from "./scoring";
+import { ALL_KNOCKOUT_SCORED_MATCH_IDS, groupMatchPoints, scoreUser } from "./scoring";
 import type { Score } from "./types";
 
 /** Deterministic full tournament: home wins every match (varied scores). */
@@ -54,13 +54,14 @@ describe("scoreUser — group stage", () => {
 });
 
 describe("scoreUser — advancement", () => {
-  it("a perfect prediction earns the theoretical maximum of 340", () => {
+  it("a perfect prediction earns the theoretical maximum of 433", () => {
     const tournament = fullTournament();
     const score = scoreUser(tournament, tournament);
     expect(score.groupPoints).toBe(72 * 3);
     // 32×1 + 16×2 + 8×3 + 4×4 + 2×6 + champion 8 = 124
     expect(score.advancePoints).toBe(124);
-    expect(score.total).toBe(340);
+    expect(score.knockoutExactPoints).toBe(ALL_KNOCKOUT_SCORED_MATCH_IDS.length * 3);
+    expect(score.total).toBe(340 + ALL_KNOCKOUT_SCORED_MATCH_IDS.length * 3);
     expect(score.advanceByRound.get("champion")!.points).toBe(8);
   });
 
