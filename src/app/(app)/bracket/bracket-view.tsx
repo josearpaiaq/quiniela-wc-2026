@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Medal, Trophy } from "lucide-react";
 import { MATCHES } from "@/lib/db/seed-data";
 import { TEAM_BY_CODE, type ScoreRecord } from "@/lib/dto";
@@ -133,22 +132,12 @@ function MatchNode({
 }
 
 export function BracketView({
-  mySlots,
-  myScores,
-  realSlots,
-  realScores,
-  bracketReady,
+  slots,
+  scores,
 }: {
-  mySlots: SlotRecord;
-  myScores: ScoreRecord;
-  realSlots: SlotRecord;
-  realScores: ScoreRecord;
-  bracketReady: boolean;
+  slots: SlotRecord;
+  scores: ScoreRecord;
 }) {
-  const [view, setView] = useState<"mine" | "real">(bracketReady ? "mine" : "real");
-  const slots = view === "mine" ? mySlots : realSlots;
-  const scores = view === "mine" ? myScores : realScores;
-
   const final = slots[104];
   const finalWinner = winnerSideOf(scores[104]);
   const championCode = finalWinner && final ? (finalWinner === "home" ? final.home : final.away) : null;
@@ -158,35 +147,7 @@ export function BracketView({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="font-display text-xl font-bold uppercase">El cuadro</h2>
-        <div className="flex rounded-lg border border-line p-0.5">
-          {(
-            [
-              { key: "mine", label: "Mi bracket" },
-              { key: "real", label: "Real" },
-            ] as const
-          ).map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setView(key)}
-              className={`rounded-md px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition ${
-                view === key ? "bg-volt-400 text-pitch-950" : "text-ink-500 hover:text-ink-300"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {view === "mine" && !bracketReady && (
-        <p className="rounded-lg border border-dashed border-line-bright bg-pitch-900/60 px-4 py-3 text-sm text-ink-500">
-          Tu bracket se arma al completar los 72 pronósticos de grupos — por ahora se muestra
-          vacío.
-        </p>
-      )}
+      <h2 className="font-display text-xl font-bold uppercase">El cuadro</h2>
 
       {/* champion banner */}
       <div className="flex items-center justify-center gap-3 rounded-xl border border-gold-400/40 bg-gradient-to-r from-pitch-900 via-pitch-800 to-pitch-900 px-4 py-3">
@@ -196,7 +157,7 @@ export function BracketView({
             <span aria-hidden className="mr-2">{champion.flag}</span>
             {champion.name}
             <span className="ml-2 text-xs font-bold uppercase tracking-widest text-gold-400">
-              {view === "mine" ? "tu campeón" : "campeón"}
+              Campeón
             </span>
           </p>
         ) : (

@@ -1,5 +1,6 @@
 import { type NextRequest } from "next/server";
 import { revalidatePath } from "next/cache";
+import { and, eq, isNull, lt } from "drizzle-orm";
 import { getWCFinishedMatches } from "@/lib/football-data-client";
 import { getDb, schema } from "@/lib/db";
 import { MATCHES } from "@/lib/db/seed-data";
@@ -19,25 +20,29 @@ export async function GET(request: NextRequest) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const now = new Date();
-  const today = utcDateString(now);
-  const yesterday = utcDateString(new Date(now.getTime() - 86_400_000));
+  const db = getDb();
 
-  const fdFinished = await getWCFinishedMatches(yesterday, today);
+  // Find all matches past kickoff that don't have a result yet
+  const pendingMatches = await db
+    .select({ id: schema.matches.id, kickoffAt: schema.matches.kickoffAt })
+    .from(schema.matches)
+    .leftJoin(schema.results, eq(schema.results.matchId, schema.matches.id))
+    .where(and(lt(schema.matches.kickoffAt, new Date()), isNull(schema.results.matchId)));
+
+  if (pendingMatches.length === 0) {
+    return Response.json({ synced: 0, skipped: 0, unmatched: 0 });
+  }
+
+  const pendingIds = new Set(pendingMatches.map((m) => m.id));
+  const minKickoff = new Date(Math.min(...pendingMatches.map((m) => m.kickoffAt.getTime())));
+
+  const fdFinished = await getWCFinishedMatches(utcDateString(minKickoff), utcDateString(new Date()));
 
   // Build kickoff-time → seed match lookup
   const kickoffToSeedMatch = new Map<string, (typeof MATCHES)[0]>();
   for (const m of MATCHES) {
     kickoffToSeedMatch.set(kickoffKey(m.kickoffAt), m);
   }
-
-  const db = getDb();
-
-  // Fetch existing final results so we never overwrite a human-entered result
-  const existingResults = await db
-    .select({ matchId: schema.results.matchId })
-    .from(schema.results);
-  const enteredMatchIds = new Set(existingResults.map((r) => r.matchId));
 
   // ── FINAL RESULTS ─────────────────────────────────────────────────────────
 
@@ -63,7 +68,7 @@ export async function GET(request: NextRequest) {
       continue;
     }
 
-    if (enteredMatchIds.has(ourMatch.id)) {
+    if (!pendingIds.has(ourMatch.id)) {
       skipped.push(ourMatch.id);
       continue;
     }

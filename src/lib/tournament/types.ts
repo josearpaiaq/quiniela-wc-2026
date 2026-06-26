@@ -60,8 +60,11 @@ export interface UserScore {
   total: number;
   groupPoints: number;
   advancePoints: number;
+  knockoutExactPoints: number;
   /** matchId -> 0 | 1 | 3 for group matches that have both prediction and result. */
   groupPointsByMatch: ReadonlyMap<number, number>;
   /** round -> { hits: team codes correctly placed, points } */
   advanceByRound: ReadonlyMap<ScoredRound, { hits: string[]; points: number }>;
+  /** matchId -> 0 | 3 for knockout matches (r32–final) that have both prediction and result. */
+  knockoutExactByMatch: ReadonlyMap<number, number>;
 }
