@@ -2,20 +2,12 @@
 
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "../auth/session";
 import { getDb, schema } from "../db";
 import { normalizeWinnerSide, predictionInputSchema } from "../rules";
 import { generateTempPassword } from "../temp-password";
 import type { SaveResult } from "./predictions";
-
-function revalidateAll() {
-  revalidatePath("/quiniela");
-  revalidatePath("/bracket");
-  revalidatePath("/tabla");
-  revalidatePath("/admin/resultados");
-}
 
 export async function saveOfficialResult(input: unknown): Promise<SaveResult> {
   const session = await requireAdmin();
@@ -56,7 +48,6 @@ export async function saveOfficialResult(input: unknown): Promise<SaveResult> {
       },
     });
 
-  revalidateAll();
   return { ok: true };
 }
 
@@ -78,7 +69,6 @@ export async function setMatchOpenOverride(input: unknown): Promise<SaveResult> 
     .returning({ id: schema.matches.id });
   if (updated.length === 0) return { ok: false, error: "Partido inexistente" };
 
-  revalidateAll();
   return { ok: true };
 }
 
@@ -139,6 +129,5 @@ export async function saveKnockoutOverride(input: unknown): Promise<SaveResult> 
       });
   }
 
-  revalidateAll();
   return { ok: true };
 }

@@ -1,7 +1,6 @@
 "use server";
 
 import { and, eq } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAdmin, requireUser } from "../auth/session";
@@ -38,8 +37,6 @@ export async function createGroup(
         inviteCode: generateInviteCode(),
         createdBy: session.sub,
       });
-      revalidatePath("/admin/grupos");
-      revalidatePath("/tabla");
       return { error: null, success: `Grupo "${parsed.data.name}" creado` };
     } catch (error) {
       if (error instanceof Error && error.message.includes("groups_invite_code_unique")) {
@@ -76,8 +73,6 @@ export async function joinGroupByCode(
     .returning({ groupId: schema.groupMembers.groupId });
   if (inserted.length === 0) return { error: "Ya eres parte de ese grupo" };
 
-  revalidatePath("/tabla");
-  revalidatePath("/admin/grupos");
   redirect(`/tabla?grupo=${group.id}`);
 }
 
@@ -106,8 +101,7 @@ export async function addGroupMembers(input: unknown): Promise<SaveResult> {
     return { ok: false, error: "Grupo o usuario inexistente" };
   }
 
-  revalidatePath("/admin/grupos");
-  revalidatePath("/tabla");
+
   return { ok: true };
 }
 
@@ -131,7 +125,6 @@ export async function removeGroupMember(input: unknown): Promise<SaveResult> {
     .returning({ groupId: schema.groupMembers.groupId });
   if (deleted.length === 0) return { ok: false, error: "No es parte del grupo" };
 
-  revalidatePath("/admin/grupos");
-  revalidatePath("/tabla");
+
   return { ok: true };
 }
