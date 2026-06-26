@@ -118,7 +118,7 @@ export function QuinielaClient({
 
   const scoreMap = useMemo(() => toScoreMap(predictions), [predictions]);
   const realScoreMap = useMemo(() => toScoreMap(results), [results]);
-  const bracket = useMemo(() => buildBracket(scoreMap), [scoreMap]);
+  const realBracket = useMemo(() => buildBracket(realScoreMap), [realScoreMap]);
   const bracketReady = useMemo(() => allGroupsComplete(scoreMap), [scoreMap]);
 
   const groupFilled = useMemo(
@@ -186,12 +186,13 @@ export function QuinielaClient({
   }
 
   const renderCard = useCallback((match: (typeof MATCHES)[number], tag: React.ReactNode) => {
-    const slot = match.phase === "group" ? null : bracket.get(match.id);
+    const slot = match.phase === "group" ? null : realBracket.get(match.id);
     const homeCode = match.phase === "group" ? match.home! : (slot?.home ?? null);
     const awayCode = match.phase === "group" ? match.away! : (slot?.away ?? null);
     const prediction = predictions[match.id];
     const real = results[match.id];
-    const open = overrides.has(match.id) || now < Date.parse(match.kickoffAt);
+    const teamsReady = match.phase === "group" || (slot?.home != null && slot?.away != null);
+    const open = overrides.has(match.id) || (now < Date.parse(match.kickoffAt) && teamsReady);
     return (
       <MatchCard
         key={match.id}
@@ -224,7 +225,7 @@ export function QuinielaClient({
         onWinner={(side) => setWinner(match.id, match.phase, side)}
       />
     );
-  }, [bracket, predictions, results, overrides, now, saveStatus, setNav]);
+  }, [realBracket, predictions, results, overrides, now, saveStatus, setNav]);
 
   return (
     <>
@@ -300,17 +301,11 @@ export function QuinielaClient({
             ref={groupsPanelRef}
           />
         </>
-      ) : bracketReady ? (
+      ) : (
         <>
           <SectionSeparator label={PHASES.find((p) => p.key === tab)?.label ?? "Eliminación directa"} />
           <KnockoutPanel tab={tab} renderCard={renderCard} />
         </>
-      ) : (
-        <BracketPendingPanel
-          groupFilled={groupFilled}
-          predictions={predictions}
-          onGoToGroup={(g) => setNav({ tab: "group", group: g })}
-        />
       )}
     </div>
     </>
@@ -483,11 +478,11 @@ function KnockoutPanel({
 
   return (
     <div className="space-y-3">
-      {matches.map((m) => renderCard(m, matchTag(m)))}
       <p className="px-1 text-center text-[11px] text-ink-500">
-        Los cruces salen de tus pronósticos de grupos. Si cambias un grupo (aún abierto), los
-        equipos se actualizan pero tus marcadores de llaves se conservan.
+        Los cruces se arman con los resultados reales. Puedes pronosticar un partido cuando ambos
+        equipos estén confirmados y antes del pitazo inicial.
       </p>
+      {matches.map((m) => renderCard(m, matchTag(m)))}
     </div>
   );
 }
@@ -789,48 +784,3 @@ function SectionSeparator({ label }: { label: string }) {
   );
 }
 
-function BracketPendingPanel({
-  groupFilled,
-  predictions,
-  onGoToGroup,
-}: {
-  groupFilled: number;
-  predictions: ScoreRecord;
-  onGoToGroup: (g: GroupLetter) => void;
-}) {
-  const missingByGroup = useMemo(
-    () => GROUP_LETTERS.map((letter) => ({
-      letter,
-      missing: MATCHES.filter(
-        (m) => m.phase === "group" && m.group === letter && predictions[m.id] === undefined,
-      ).length,
-    })).filter((g) => g.missing > 0),
-    [predictions],
-  );
-
-  return (
-    <div className="rounded-xl border border-dashed border-line-bright bg-pitch-900/60 px-5 py-8 text-center">
-      <p className="font-display text-4xl font-extrabold text-ink-500">
-        {groupFilled}
-        <span className="text-ink-500/50">/72</span>
-      </p>
-      <h3 className="mt-2 font-display text-lg font-bold">Tu bracket aún no se arma</h3>
-      <p className="mx-auto mt-1 max-w-sm text-sm text-ink-500">
-        Completa los 72 pronósticos de la fase de grupos y los cruces de eliminación directa se
-        formarán solos con tus clasificados.
-      </p>
-      <div className="mx-auto mt-4 flex max-w-xs flex-wrap justify-center gap-1.5">
-        {missingByGroup.map(({ letter, missing }) => (
-          <button
-            key={letter}
-            type="button"
-            onClick={() => onGoToGroup(letter)}
-            className="rounded-lg border border-line px-2.5 py-1.5 text-xs text-ink-300 transition hover:border-gold-400/60 hover:text-gold-400"
-          >
-            {letter} <span className="font-mono text-ink-500">falta{missing > 1 ? "n" : ""} {missing}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
