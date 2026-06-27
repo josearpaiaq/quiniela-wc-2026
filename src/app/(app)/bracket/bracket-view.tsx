@@ -41,8 +41,8 @@ const R16_ORDER = displayOrder(QF_ORDER);
 const R32_ORDER = displayOrder(R16_ORDER);
 
 const COLUMNS: Array<{ title: string; ids: number[]; span: number }> = [
-  { title: "Dieciseisavos", ids: R32_ORDER, span: 1 },
-  { title: "Octavos", ids: R16_ORDER, span: 2 },
+  { title: "Dieciseisavos de final", ids: R32_ORDER, span: 1 },
+  { title: "Octavos de final", ids: R16_ORDER, span: 2 },
   { title: "Cuartos", ids: QF_ORDER, span: 4 },
   { title: "Semifinales", ids: SF_ORDER, span: 8 },
   { title: "Final", ids: [104], span: 16 },
