@@ -37,8 +37,8 @@ export const TEAM_ID_BY_CODE: ReadonlyMap<string, number> = new Map(
 
 export const PHASES: Array<{ key: Phase | "finals"; label: string; short: string }> = [
   { key: "group", label: "Fase de grupos", short: "Grupos" },
-  { key: "r32", label: "Dieciseisavos", short: "32avos" },
-  { key: "r16", label: "Octavos", short: "16avos" },
+  { key: "r32", label: "Dieciseisavos de final", short: "16avos" },
+  { key: "r16", label: "Octavos de final", short: "Octavos" },
   { key: "qf", label: "Cuartos de final", short: "Cuartos" },
   { key: "sf", label: "Semifinales", short: "Semis" },
   { key: "finals", label: "Final y 3er puesto", short: "Final" },
