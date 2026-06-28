@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { requireUser } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
-import { MATCHES, type GroupLetter } from "@/lib/db/seed-data";
+import { MATCHES, type GroupLetter, type Phase } from "@/lib/db/seed-data";
 import { TEAM_BY_CODE } from "@/lib/dto";
 import { isMatchOpen } from "@/lib/rules";
 import { overrideRowsToMap, rowsToScoreMap } from "@/lib/score-rows";
@@ -12,6 +12,7 @@ import {
   buildBracket,
   computeGroupStandings,
   GROUP_LETTERS,
+  knockoutMatchPoints,
   scoreUser,
   ROUND_VALUES,
   type ScoredRound,
@@ -19,7 +20,7 @@ import {
 import { type PredictionCard, PredictionList } from "./prediction-list";
 
 const ROUND_LABELS: Record<ScoredRound, string> = {
-  r32: "En dieciseisavos",
+  r32: "En 16avos",
   r16: "En octavos",
   qf: "En cuartos",
   sf: "En semis",
@@ -76,7 +77,7 @@ export default async function QuinielaAjenaPage({
   const overrides = overrideRowsToMap(overrideRows);
   const openOverrideIds = new Set(openRows.map((r) => r.id));
   const score = scoreUser(predictions, results, overrides);
-  const theirBracket = buildBracket(predictions);
+  const realBracket = buildBracket(results, overrides);
 
   // Real final positions for each team (used to sort advance-hit flags).
   const finalPositionByCode = new Map<string, { group: GroupLetter; position: number }>();
@@ -99,10 +100,36 @@ export default async function QuinielaAjenaPage({
 
   // Anti-copy: only predictions for matches that can no longer be edited.
   const now = new Date();
+  const knockoutPtsByMatch = new Map<number, number>();
+  for (const m of MATCHES) {
+    if (m.phase === "group" || m.phase === "third") continue;
+    const prediction = predictions.get(m.id);
+    const real = results.get(m.id);
+    if (!prediction || !real) continue;
+    knockoutPtsByMatch.set(m.id, knockoutMatchPoints(m.phase, prediction, real));
+  }
   const pointsByMatch = new Map<number, number>([
     ...score.groupPointsByMatch,
-    ...score.knockoutExactByMatch,
+    ...knockoutPtsByMatch,
   ]);
+
+  const phasePoints = new Map<Phase, number>([["group", score.groupPoints]]);
+  for (const m of MATCHES) {
+    if (m.phase === "group" || m.phase === "third") continue;
+    const pts = knockoutPtsByMatch.get(m.id);
+    if (pts !== undefined) {
+      phasePoints.set(m.phase, (phasePoints.get(m.phase) ?? 0) + pts);
+    }
+  }
+
+  const PHASE_BREAKDOWN: { phase: Phase; label: string }[] = [
+    { phase: "group", label: "Grupos" },
+    { phase: "r32", label: "16avos" },
+    { phase: "r16", label: "Octavos" },
+    { phase: "qf", label: "Cuartos" },
+    { phase: "sf", label: "Semis" },
+    { phase: "final", label: "Final" },
+  ];
 
   const matchCards: PredictionCard[] = MATCHES.filter((m) => {
     const locked = !isMatchOpen(
@@ -118,9 +145,10 @@ export default async function QuinielaAjenaPage({
       const slot =
         m.phase === "group"
           ? { home: m.home ?? null, away: m.away ?? null }
-          : (theirBracket.get(m.id) ?? { home: null, away: null });
+          : (realBracket.get(m.id) ?? { home: null, away: null });
       return {
         id: m.id,
+        phase: m.phase,
         kickoffAt: m.kickoffAt,
         homeCode: slot.home,
         awayCode: slot.away,
@@ -141,7 +169,7 @@ export default async function QuinielaAjenaPage({
         >
           <ArrowLeft aria-hidden className="h-3.5 w-3.5" /> Volver a la tabla
         </Link>
-        <div className="mt-2 flex items-end justify-between">
+        <div className="mt-2 flex items-start justify-between gap-4">
           <div>
             <h2 className="font-display text-2xl font-extrabold">{user.displayName}</h2>
             <p className="text-xs text-ink-500">
@@ -150,10 +178,24 @@ export default async function QuinielaAjenaPage({
           </div>
           <div className="text-right">
             <p className="font-mono text-3xl font-bold text-volt-400">{score.total}</p>
-            <p className="font-mono text-[11px] text-ink-500">
-              Grupos {score.groupPoints} · Avance {score.advancePoints}
-            </p>
+            <p className="font-mono text-[10px] text-ink-500">puntos totales</p>
           </div>
+        </div>
+        <div className="mt-3 grid grid-cols-3 gap-1.5 sm:grid-cols-6">
+          {PHASE_BREAKDOWN.map(({ phase, label }) => {
+            const pts = phasePoints.get(phase) ?? 0;
+            return (
+              <div
+                key={phase}
+                className="rounded-lg border border-line bg-pitch-900 px-2 py-1.5 text-center"
+              >
+                <p className={`font-mono text-lg font-bold ${pts > 0 ? "text-volt-400" : "text-ink-600"}`}>
+                  {pts}
+                </p>
+                <p className="text-[10px] text-ink-500">{label}</p>
+              </div>
+            );
+          })}
         </div>
       </div>
 

@@ -7,7 +7,7 @@ import {
 import { ROUND_VALUES } from "@/lib/tournament/types";
 
 const KNOCKOUT_ROUNDS = [
-  { key: "r32" as const, label: "Ronda de 32", slots: 32 },
+  { key: "r32" as const, label: "16avos de final", slots: 32 },
   { key: "r16" as const, label: "Octavos de final", slots: 16 },
   { key: "qf" as const, label: "Cuartos de final", slots: 8 },
   { key: "sf" as const, label: "Semifinales", slots: 4 },
