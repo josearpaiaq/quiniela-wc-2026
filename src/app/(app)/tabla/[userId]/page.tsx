@@ -2,15 +2,21 @@ import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { TeamLabel } from "@/components/team-label";
 import { requireUser } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
-import { MATCHES } from "@/lib/db/seed-data";
+import { MATCHES, type GroupLetter } from "@/lib/db/seed-data";
 import { TEAM_BY_CODE } from "@/lib/dto";
-import { formatKickoff } from "@/lib/format";
 import { isMatchOpen } from "@/lib/rules";
 import { overrideRowsToMap, rowsToScoreMap } from "@/lib/score-rows";
-import { buildBracket, scoreUser, ROUND_VALUES, type ScoredRound } from "@/lib/tournament";
+import {
+  buildBracket,
+  computeGroupStandings,
+  GROUP_LETTERS,
+  scoreUser,
+  ROUND_VALUES,
+  type ScoredRound,
+} from "@/lib/tournament";
+import { type PredictionCard, PredictionList } from "./prediction-list";
 
 const ROUND_LABELS: Record<ScoredRound, string> = {
   r32: "En dieciseisavos",
@@ -70,19 +76,61 @@ export default async function QuinielaAjenaPage({
   const overrides = overrideRowsToMap(overrideRows);
   const openOverrideIds = new Set(openRows.map((r) => r.id));
   const score = scoreUser(predictions, results, overrides);
-  // Knockout slot teams come from their own bracket. By the time a knockout
-  // match locks, every group prediction feeding it is locked too — no leak.
   const theirBracket = buildBracket(predictions);
+
+  // Real final positions for each team (used to sort advance-hit flags).
+  const finalPositionByCode = new Map<string, { group: GroupLetter; position: number }>();
+  for (const group of GROUP_LETTERS) {
+    for (const [index, row] of computeGroupStandings(group, results).entries()) {
+      finalPositionByCode.set(row.code, { group, position: index + 1 });
+    }
+  }
+
+  const sortHits = (hits: string[]) =>
+    [...hits].sort((a, b) => {
+      const pa = finalPositionByCode.get(a);
+      const pb = finalPositionByCode.get(b);
+      const aThird = (pa?.position ?? 1) > 2;
+      const bThird = (pb?.position ?? 1) > 2;
+      if (aThird !== bThird) return aThird ? 1 : -1;
+      const gc = (pa?.group ?? "Z").localeCompare(pb?.group ?? "Z");
+      return gc !== 0 ? gc : (pa?.position ?? 1) - (pb?.position ?? 1);
+    });
 
   // Anti-copy: only predictions for matches that can no longer be edited.
   const now = new Date();
-  const visible = MATCHES.filter((m) => {
+  const pointsByMatch = new Map<number, number>([
+    ...score.groupPointsByMatch,
+    ...score.knockoutExactByMatch,
+  ]);
+
+  const matchCards: PredictionCard[] = MATCHES.filter((m) => {
     const locked = !isMatchOpen(
       { kickoffAt: new Date(m.kickoffAt), openOverride: openOverrideIds.has(m.id) },
       now,
     );
     return locked && predictions.has(m.id);
-  }).sort((a, b) => Date.parse(a.kickoffAt) - Date.parse(b.kickoffAt));
+  })
+    .sort((a, b) => Date.parse(a.kickoffAt) - Date.parse(b.kickoffAt))
+    .map((m) => {
+      const prediction = predictions.get(m.id)!;
+      const real = results.get(m.id);
+      const slot =
+        m.phase === "group"
+          ? { home: m.home ?? null, away: m.away ?? null }
+          : (theirBracket.get(m.id) ?? { home: null, away: null });
+      return {
+        id: m.id,
+        kickoffAt: m.kickoffAt,
+        homeCode: slot.home,
+        awayCode: slot.away,
+        predictedHome: prediction.home,
+        predictedAway: prediction.away,
+        realHome: real?.home ?? null,
+        realAway: real?.away ?? null,
+        points: pointsByMatch.get(m.id),
+      };
+    });
 
   return (
     <div className="space-y-5">
@@ -132,7 +180,7 @@ export default async function QuinielaAjenaPage({
                   </span>
                 </div>
                 <div className="flex justify-end flex-wrap gap-1">
-                  {data.hits.map((code) => (
+                  {sortHits(data.hits).map((code) => (
                     <div key={code}>
                       <span title={TEAM_BY_CODE.get(code)?.name} aria-hidden>
                         {TEAM_BY_CODE.get(code)?.flag}
@@ -146,70 +194,7 @@ export default async function QuinielaAjenaPage({
         </div>
       </section>
 
-      {/* locked predictions */}
-      <section className="space-y-2">
-        <h3 className="text-[11px] font-medium uppercase tracking-wider text-ink-500">
-          Pronósticos visibles ({visible.length})
-        </h3>
-        {visible.length === 0 && (
-          <p className="rounded-xl border border-dashed border-line-bright px-4 py-6 text-center text-sm text-ink-500">
-            Todavía no hay partidos bloqueados con pronóstico de {user.displayName}.
-          </p>
-        )}
-        {visible.map((match) => {
-          const prediction = predictions.get(match.id)!;
-          const real = results.get(match.id);
-          const points = score.groupPointsByMatch.get(match.id);
-          const slot =
-            match.phase === "group"
-              ? { home: match.home ?? null, away: match.away ?? null }
-              : (theirBracket.get(match.id) ?? { home: null, away: null });
-          return (
-            <div
-              key={match.id}
-              className="space-y-2 rounded-lg border border-line bg-pitch-900 px-3 py-2.5 text-sm"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="flex min-w-0 items-center gap-2">
-                  <span className="rounded bg-pitch-700 px-1.5 py-0.5 font-mono text-[10px] text-ink-300">
-                    P{match.id}
-                  </span>
-                  <span className="truncate text-xs text-ink-500" suppressHydrationWarning>
-                    {formatKickoff(match.kickoffAt)}
-                  </span>
-                </span>
-                {points !== undefined && (
-                  <span
-                    className={`rounded-full px-1.5 py-0.5 font-mono text-[11px] font-semibold ${
-                      points === 3
-                        ? "bg-volt-400/15 text-volt-400"
-                        : points === 1
-                          ? "bg-gold-400/15 text-gold-400"
-                          : "bg-pitch-700 text-ink-500"
-                    }`}
-                  >
-                    +{points}
-                  </span>
-                )}
-              </div>
-              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                <TeamLabel code={slot.home} />
-                <span className="text-center">
-                  <span className="font-mono font-semibold">
-                    {prediction.home}–{prediction.away}
-                  </span>
-                  {real && (
-                    <span className="block font-mono text-[11px] text-ink-500">
-                      real {real.home}–{real.away}
-                    </span>
-                  )}
-                </span>
-                <TeamLabel code={slot.away} align="right" />
-              </div>
-            </div>
-          );
-        })}
-      </section>
+      <PredictionList cards={matchCards} />
     </div>
   );
 }
