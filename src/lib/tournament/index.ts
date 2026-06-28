@@ -17,5 +17,6 @@ export {
   GROUP_EXACT_POINTS,
   GROUP_OUTCOME_POINTS,
   groupMatchPoints,
+  knockoutMatchPoints,
   scoreUser,
 } from "./scoring";

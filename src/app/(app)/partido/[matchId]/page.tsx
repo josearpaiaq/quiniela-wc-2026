@@ -12,7 +12,7 @@ import { TEAM_BY_CODE } from "@/lib/dto";
 import { formatKickoff, shortVenue } from "@/lib/format";
 import { isPredictionVisibleToOthers } from "@/lib/rules";
 import { overrideRowsToMap, rowsToScoreMap } from "@/lib/score-rows";
-import { buildBracket, groupMatchPoints } from "@/lib/tournament";
+import { buildBracket, groupMatchPoints, knockoutMatchPoints } from "@/lib/tournament";
 
 async function PartidoContent({
   params,
@@ -84,15 +84,20 @@ async function PartidoContent({
           away: null,
         });
 
-  const scoresPoints = match.phase === "group" && real !== undefined;
   const rows = userRows
     .map((u) => {
       const prediction =
         u.homeScore !== null && u.awayScore !== null
           ? { home: u.homeScore, away: u.awayScore, winnerSide: u.winnerSide }
           : null;
-      const points =
-        prediction && scoresPoints ? groupMatchPoints(prediction, real) : null;
+      let points: number | null = null;
+      if (prediction && real !== undefined) {
+        if (match.phase === "group") {
+          points = groupMatchPoints(prediction, real);
+        } else if (match.phase !== "third") {
+          points = knockoutMatchPoints(match.phase, prediction, real);
+        }
+      }
       return { ...u, prediction, points };
     })
     .sort(
@@ -173,7 +178,7 @@ async function PartidoContent({
                 {row.points !== null && (
                   <span
                     className={`shrink-0 rounded-full px-1.5 py-0.5 font-mono text-[11px] font-semibold ${
-                      row.points === 3
+                      row.points > 1
                         ? "bg-volt-400/15 text-volt-400"
                         : row.points === 1
                           ? "bg-gold-400/15 text-gold-400"
