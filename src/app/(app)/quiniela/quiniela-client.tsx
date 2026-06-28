@@ -88,10 +88,12 @@ export function QuinielaClient({
   initialPredictions,
   results,
   openOverrides,
+  bracketOverrides,
 }: {
   initialPredictions: ScoreRecord;
   results: ScoreRecord;
   openOverrides: number[];
+  bracketOverrides: { matchId: number; home: string | null; away: string | null }[];
 }) {
   const [predictions, setPredictions] = useState<ScoreRecord>(initialPredictions);
   const [{ tab, group }, setNav] = useQueryStates(
@@ -118,7 +120,11 @@ export function QuinielaClient({
 
   const scoreMap = useMemo(() => toScoreMap(predictions), [predictions]);
   const realScoreMap = useMemo(() => toScoreMap(results), [results]);
-  const realBracket = useMemo(() => buildBracket(realScoreMap), [realScoreMap]);
+  const overridesMap = useMemo(
+    () => new Map(bracketOverrides.map((o) => [o.matchId, { home: o.home, away: o.away }])),
+    [bracketOverrides],
+  );
+  const realBracket = useMemo(() => buildBracket(realScoreMap, overridesMap), [realScoreMap, overridesMap]);
   const bracketReady = useMemo(() => allGroupsComplete(scoreMap), [scoreMap]);
 
   const groupFilled = useMemo(
