@@ -38,10 +38,13 @@ export async function GET(request: NextRequest) {
 
   const fdFinished = await getWCFinishedMatches(utcDateString(minKickoff), utcDateString(new Date()));
 
-  // Build kickoff-time → seed match lookup
-  const kickoffToSeedMatch = new Map<string, (typeof MATCHES)[0]>();
+  // Build kickoff-time → seed matches lookup (multiple per slot for simultaneous group matches)
+  const kickoffToSeedMatches = new Map<string, (typeof MATCHES)[0][]>();
   for (const m of MATCHES) {
-    kickoffToSeedMatch.set(kickoffKey(m.kickoffAt), m);
+    const key = kickoffKey(m.kickoffAt);
+    const bucket = kickoffToSeedMatches.get(key) ?? [];
+    bucket.push(m);
+    kickoffToSeedMatches.set(key, bucket);
   }
 
   // ── FINAL RESULTS ─────────────────────────────────────────────────────────
@@ -56,7 +59,17 @@ export async function GET(request: NextRequest) {
   const unmatched: { fdId: number; utcDate: string; home: string; away: string }[] = [];
 
   for (const fd of fdFinished) {
-    const ourMatch = kickoffToSeedMatch.get(kickoffKey(fd.utcDate));
+    const bucket = kickoffToSeedMatches.get(kickoffKey(fd.utcDate));
+
+    // For slots with multiple simultaneous matches, disambiguate by team codes.
+    const ourMatch = bucket?.length === 1
+      ? bucket[0]
+      : bucket?.find(
+          (m) =>
+            (m.home === fd.homeTeam.tla && m.away === fd.awayTeam.tla) ||
+            // knockout matches use source strings, not team codes — fall through to first pending
+            m.phase !== "group",
+        );
 
     if (!ourMatch) {
       unmatched.push({

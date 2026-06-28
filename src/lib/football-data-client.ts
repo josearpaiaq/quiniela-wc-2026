@@ -34,12 +34,14 @@ interface FDMatchesResponse {
 async function fetchWCMatches(
   dateFrom: string,
   dateTo: string,
-  status: string,
+  status?: string,
 ): Promise<FDMatch[]> {
   const apiKey = process.env.FOOTBALL_DATA_API_KEY;
   if (!apiKey) throw new Error("FOOTBALL_DATA_API_KEY not configured");
 
-  const url = `${BASE}/competitions/WC/matches?dateFrom=${dateFrom}&dateTo=${dateTo}&status=${status}`;
+  const params = new URLSearchParams({ dateFrom, dateTo });
+  if (status) params.set("status", status);
+  const url = `${BASE}/competitions/WC/matches?${params}`;
   const res = await fetch(url, {
     headers: { "X-Auth-Token": apiKey },
     cache: "no-store",
@@ -59,4 +61,8 @@ export async function getWCFinishedMatches(
   dateTo: string,
 ): Promise<FDMatch[]> {
   return fetchWCMatches(dateFrom, dateTo, "FINISHED");
+}
+
+export async function getWCKnockoutMatches(): Promise<FDMatch[]> {
+  return fetchWCMatches("2026-06-28", "2026-07-19");
 }

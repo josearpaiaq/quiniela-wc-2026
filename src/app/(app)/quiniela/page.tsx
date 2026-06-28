@@ -2,13 +2,14 @@ import { eq } from "drizzle-orm";
 import { requireUser } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
 import type { ScoreRecord } from "@/lib/dto";
+import { overrideRowsToMap } from "@/lib/score-rows";
 import { QuinielaClient } from "./quiniela-client";
 
 async function QuinielaContent() {
   const session = await requireUser();
   const db = getDb();
 
-  const [overrideRows, predictionRows, resultRows] = await Promise.all([
+  const [openOverrideRows, predictionRows, resultRows, knockoutOverrideRows] = await Promise.all([
     db
       .select({ id: schema.matches.id })
       .from(schema.matches)
@@ -18,6 +19,7 @@ async function QuinielaContent() {
       .from(schema.predictions)
       .where(eq(schema.predictions.userId, session.sub)),
     db.select().from(schema.results),
+    db.select().from(schema.knockoutOverrides),
   ]);
 
   const initialPredictions: ScoreRecord = {};
@@ -38,11 +40,16 @@ async function QuinielaContent() {
     };
   }
 
+  const bracketOverrides = [...overrideRowsToMap(knockoutOverrideRows).entries()].map(
+    ([matchId, slot]) => ({ matchId, home: slot.home ?? null, away: slot.away ?? null }),
+  );
+
   return (
     <QuinielaClient
       initialPredictions={initialPredictions}
       results={results}
-      openOverrides={overrideRows.map((r) => r.id)}
+      openOverrides={openOverrideRows.map((r) => r.id)}
+      bracketOverrides={bracketOverrides}
     />
   );
 }
