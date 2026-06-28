@@ -168,3 +168,25 @@ export function scoreUser(
     knockoutExactByMatch,
   };
 }
+
+const NEXT_ROUND_VALUE: Record<"r32" | "r16" | "qf" | "sf" | "final", number> = {
+  r32: ROUND_VALUES.r16,
+  r16: ROUND_VALUES.qf,
+  qf: ROUND_VALUES.sf,
+  sf: ROUND_VALUES.final,
+  final: ROUND_VALUES.champion,
+};
+
+/** Points for one knockout match prediction: advance points + exact score bonus. */
+export function knockoutMatchPoints(
+  phase: "r32" | "r16" | "qf" | "sf" | "final",
+  predicted: { home: number; away: number; winnerSide?: Side | null },
+  real: { home: number; away: number; winnerSide?: Side | null },
+): number {
+  const realSide = pickSide(real);
+  const advance =
+    realSide !== null && pickSide(predicted) === realSide ? NEXT_ROUND_VALUE[phase] : 0;
+  const exact =
+    predicted.home === real.home && predicted.away === real.away ? KNOCKOUT_EXACT_POINTS : 0;
+  return advance + exact;
+}

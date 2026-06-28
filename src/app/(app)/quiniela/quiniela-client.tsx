@@ -17,6 +17,7 @@ import {
   buildBracket,
   computeGroupStandings,
   groupMatchPoints,
+  knockoutMatchPoints,
   rankThirds,
   type ThirdRow,
 } from "@/lib/tournament";
@@ -225,7 +226,15 @@ export function QuinielaClient({
         open={open}
         saveStatus={saveStatus[match.id] ?? null}
         result={real}
-        groupPoints={prediction && real ? groupMatchPoints(prediction, real) : null}
+        matchPoints={
+          prediction && real
+            ? match.phase === "group"
+              ? groupMatchPoints(prediction, real)
+              : match.phase === "third"
+                ? null
+                : knockoutMatchPoints(match.phase, prediction, real)
+            : null
+        }
         detailsHref={open ? undefined : `/partido/${match.id}`}
         onScore={(side, value) => setScore(match.id, match.phase, side, value)}
         onWinner={(side) => setWinner(match.id, match.phase, side)}

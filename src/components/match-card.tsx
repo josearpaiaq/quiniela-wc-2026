@@ -23,7 +23,7 @@ export function MatchCard({
   open,
   saveStatus,
   result,
-  groupPoints,
+  matchPoints,
   detailsHref,
   onScore,
   onWinner,
@@ -42,7 +42,7 @@ export function MatchCard({
   open: boolean;
   saveStatus: SaveStatus;
   result: ScoreDTO | undefined;
-  groupPoints: number | null;
+  matchPoints: number | null;
   /** when set (locked matches), links to the everyone's-predictions page */
   detailsHref?: string;
   onScore: (side: "home" | "away", value: number) => void;
@@ -84,7 +84,7 @@ export function MatchCard({
               <Check aria-hidden className="h-3 w-3" /> guardado
             </span>
           )}
-          {saveStatus === "error" && <span className="text-danger-400">no guardado</span>}
+          {saveStatus === "error" && <span className="text-danger-400">iniciado</span>}
           {!open && <Lock aria-label="bloqueado" className="h-3.5 w-3.5" />}
         </span>
       </header>
@@ -149,17 +149,17 @@ export function MatchCard({
               Real: <span className="font-mono font-semibold text-ink-100">{result.home}–{result.away}</span>
             </span>
           )}
-          {result && phase === "group" && groupPoints !== null && (
+          {result && matchPoints !== null && (
             <span
               className={`rounded-full px-2 py-0.5 font-mono font-semibold ${
-                groupPoints === 3
+                matchPoints > 1
                   ? "bg-volt-400/15 text-volt-400"
-                  : groupPoints === 1
+                  : matchPoints === 1
                     ? "bg-gold-400/15 text-gold-400"
                     : "bg-pitch-700 text-ink-500"
               }`}
             >
-              +{groupPoints} pts
+              +{matchPoints} pts
             </span>
           )}
           {detailsHref && (
