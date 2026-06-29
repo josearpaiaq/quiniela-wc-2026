@@ -15,6 +15,7 @@ export const GROUP_OUTCOME_POINTS = 1;
 export const KNOCKOUT_EXACT_POINTS = 3;
 
 const GROUP_MATCHES = MATCHES.filter((m) => m.phase === "group");
+const THIRD_PLACE_MATCH = MATCHES.find((m) => m.phase === "third")!
 
 const ROUND_MATCH_IDS: Record<Exclude<ScoredRound, "champion">, number[]> = {
   r32: MATCHES.filter((m) => m.phase === "r32").map((m) => m.id),
@@ -80,6 +81,16 @@ export function scoreUser(
     const matchPoints = groupMatchPoints(predicted, real);
     groupPointsByMatch.set(match.id, matchPoints);
     groupPoints += matchPoints;
+  }
+
+  {
+    const predicted = predictions.get(THIRD_PLACE_MATCH.id);
+    const real = results.get(THIRD_PLACE_MATCH.id);
+    if (predicted && real) {
+      const pts = groupMatchPoints(predicted, real);
+      groupPointsByMatch.set(THIRD_PLACE_MATCH.id, pts);
+      groupPoints += pts;
+    }
   }
 
   // r32 advancement still comes from the user's group predictions (who advances from groups)

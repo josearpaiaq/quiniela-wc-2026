@@ -54,14 +54,15 @@ describe("scoreUser — group stage", () => {
 });
 
 describe("scoreUser — advancement", () => {
-  it("a perfect prediction earns the theoretical maximum of 433", () => {
+  it("a perfect prediction earns the theoretical maximum of 436", () => {
     const tournament = fullTournament();
     const score = scoreUser(tournament, tournament);
-    expect(score.groupPoints).toBe(72 * 3);
+    // 72 group matches + 1 third-place match, all exact
+    expect(score.groupPoints).toBe(72 * 3 + 3);
     // 32×1 + 16×2 + 8×3 + 4×4 + 2×6 + champion 8 = 124
     expect(score.advancePoints).toBe(124);
     expect(score.knockoutExactPoints).toBe(ALL_KNOCKOUT_SCORED_MATCH_IDS.length * 3);
-    expect(score.total).toBe(340 + ALL_KNOCKOUT_SCORED_MATCH_IDS.length * 3);
+    expect(score.total).toBe(343 + ALL_KNOCKOUT_SCORED_MATCH_IDS.length * 3);
     expect(score.advanceByRound.get("champion")!.points).toBe(8);
   });
 
