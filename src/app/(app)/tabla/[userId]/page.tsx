@@ -113,7 +113,8 @@ export default async function QuinielaAjenaPage({
     ...knockoutPtsByMatch,
   ]);
 
-  const phasePoints = new Map<Phase, number>([["group", score.groupPoints]]);
+  const r32AdvancePoints = score.advanceByRound.get("r32")?.points ?? 0;
+  const phasePoints = new Map<Phase, number>([["group", score.groupPoints + r32AdvancePoints]]);
   for (const m of MATCHES) {
     if (m.phase === "group" || m.phase === "third") continue;
     const pts = knockoutPtsByMatch.get(m.id);
