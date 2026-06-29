@@ -53,6 +53,10 @@ export default function ReglasPage() {
           Nota: en grupos puede haber empates, así que predecir 1-1 cuando termina 1-1 da 3 pts;
           predecir 0-0 cuando termina 1-1 da 1 pt.
         </p>
+        <p className="px-1 text-[11px] text-ink-500">
+          El partido por el tercer puesto usa la misma escala: marcador exacto 3 pts, resultado
+          correcto 1 pt.
+        </p>
       </section>
 
       {/* Knockout rounds */}
@@ -130,7 +134,7 @@ export default function ReglasPage() {
           Máximo teórico
         </p>
         <p className="mt-2 font-mono text-3xl font-bold">
-          {72 * GROUP_EXACT_POINTS +
+          {73 * GROUP_EXACT_POINTS +
             32 * ROUND_VALUES.r32 +
             16 * ROUND_VALUES.r16 +
             8 * ROUND_VALUES.qf +
@@ -141,9 +145,9 @@ export default function ReglasPage() {
           <span className="text-sm font-normal text-ink-400">puntos</span>
         </p>
         <p className="mt-1 text-[11px] text-ink-500">
-          Si acertaras el marcador exacto de los 72 partidos de grupos, todos los avances de
-          eliminación y el marcador exacto de los {ALL_KNOCKOUT_SCORED_MATCH_IDS.length} partidos
-          de eliminación directa.
+          Si acertaras el marcador exacto de los 72 partidos de grupos y el tercer lugar, todos
+          los avances de eliminación y el marcador exacto de los{" "}
+          {ALL_KNOCKOUT_SCORED_MATCH_IDS.length} partidos de eliminación directa.
         </p>
       </section>
     </div>
