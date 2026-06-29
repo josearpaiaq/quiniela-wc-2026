@@ -42,8 +42,10 @@ Variables de entorno:
 
 ## Reglas de puntaje (resumen)
 
-- **Grupos**: marcador exacto **3 pts** · acertar ganador/empate **1 pt**
-- **Eliminatorias** (por avance, equipo correcto en la ronda real): 32avos 1 · 16avos 2 · cuartos 3 · semis 4 · final 6 · campeón 8
+- **Grupos** (72 partidos): marcador exacto **3 pts** · acertar ganador/empate **1 pt**
+- **Tercer puesto** (1 partido): mismo sistema que grupos — exacto **3 pts** · resultado correcto **1 pt**
+- **Eliminatorias** (por equipo que avanza a cada ronda real): 32avos **1** · 16avos **2** · cuartos **3** · semis **4** · final **6** · campeón **8**
+- **Bonus exacto en eliminatorias**: +**3 pts** adicionales si aciertas el marcador exacto de un partido de fase eliminatoria (r32, r16, cuartos, semis, final)
 - Pronósticos editables hasta el kickoff de cada partido (el admin puede desbloquear casos puntuales)
 - Los pronósticos ajenos solo se ven cuando el partido ya está bloqueado
 
