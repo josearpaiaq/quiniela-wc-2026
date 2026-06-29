@@ -83,9 +83,9 @@ async function TablaContent({
   const standings = users
     .map((user) => {
       const score = scoreUser(byUser.get(user.id) ?? new Map(), results, overrides);
-      const exactos = [...score.groupPointsByMatch.values()].filter(
-        (v) => v === GROUP_EXACT_POINTS,
-      ).length;
+      const exactos =
+        [...score.groupPointsByMatch.values()].filter((v) => v === GROUP_EXACT_POINTS).length +
+        [...score.knockoutExactByMatch.values()].filter((v) => v > 0).length;
       return { user, score, filled: byUser.get(user.id)?.size ?? 0, exactos };
     })
     .sort(
