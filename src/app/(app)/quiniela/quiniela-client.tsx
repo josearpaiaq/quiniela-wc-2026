@@ -539,7 +539,11 @@ const DayMatchesPanel = memo(function DayMatchesPanel({
     if (dayParam && allDays.some((d) => d.key === dayParam)) return dayParam;
     return allDays.find((d) => d.key >= todayKey)?.key ?? allDays[0]?.key ?? todayKey;
   })();
-  const setActiveKey = (key: string) => setDayParam(key === todayKey ? null : key);
+  const userChangedDay = useRef(false);
+  const setActiveKey = (key: string) => {
+    userChangedDay.current = true;
+    setDayParam(key === todayKey ? null : key);
+  };
 
   const [collapsed, setCollapsed] = useState(false);
   const activeDay = allDays.find((d) => d.key === activeKey);
@@ -549,8 +553,13 @@ const DayMatchesPanel = memo(function DayMatchesPanel({
   const activeButtonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!collapsed) {
-      activeButtonRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      activeButtonRef.current?.scrollIntoView({
+        behavior: userChangedDay.current ? "smooth" : "instant",
+        block: "nearest",
+        inline: "center",
+      });
     }
+    userChangedDay.current = false;
   }, [activeKey, collapsed]);
 
   if (allDays.length === 0) return null;
