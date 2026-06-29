@@ -284,34 +284,6 @@ export function QuinielaClient({
         </div>
       </div>
 
-      {/* progress strip */}
-      <div className="flex items-center gap-3 rounded-xl border border-line bg-pitch-900 px-4 py-3">
-        <div className="flex-1">
-          <div className="mb-1.5 flex items-baseline justify-between">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-ink-500">
-              Pronósticos de grupos
-            </p>
-            <p className="font-mono text-sm font-semibold">
-              <span className={groupFilled === 72 ? "text-volt-400" : "text-ink-100"}>
-                {groupFilled}
-              </span>
-              <span className="text-ink-500">/72</span>
-            </p>
-          </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-pitch-700">
-            <div
-              className="h-full rounded-full bg-volt-400 transition-all duration-500"
-              style={{ width: `${(groupFilled / 72) * 100}%` }}
-            />
-          </div>
-        </div>
-        {bracketReady && (
-          <span className="rounded-full bg-volt-400/15 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-volt-400">
-            Bracket activo
-          </span>
-        )}
-      </div>
-
       {/* upcoming matches by day */}
       {mounted && <DayMatchesPanel now={now} renderCard={renderCard} />}
 
