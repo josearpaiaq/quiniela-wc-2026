@@ -91,7 +91,6 @@ async function TablaContent({
     .sort(
       (a, b) =>
         b.score.total - a.score.total ||
-        b.score.groupPoints - a.score.groupPoints ||
         b.exactos - a.exactos ||
         a.user.displayName.localeCompare(b.user.displayName),
     );
