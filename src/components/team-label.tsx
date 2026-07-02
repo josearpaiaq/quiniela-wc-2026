@@ -48,7 +48,7 @@ export function TeamLabel({
             className="shrink-0 text-ink-500/70 transition hover:text-volt-400"
             onClick={() => teamHistory.open(team.code)}
           >
-            <Info aria-hidden className="h-1.5 w-1.5" />
+            <Info aria-hidden className="h-3 w-3" />
           </button>
         )}
       </span>
