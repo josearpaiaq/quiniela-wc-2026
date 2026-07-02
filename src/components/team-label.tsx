@@ -1,8 +1,10 @@
 "use client";
 
+import { Info } from "lucide-react";
 import { TEAM_BY_CODE } from "@/lib/dto";
 import { Tooltip } from "./tooltip";
 import { useConfetti } from "./confetti";
+import { useTeamHistory } from "./team-history";
 
 export function TeamLabel({
   code,
@@ -14,6 +16,7 @@ export function TeamLabel({
   align?: "left" | "right";
 }) {
   const { trigger } = useConfetti();
+  const teamHistory = useTeamHistory();
   const team = code ? TEAM_BY_CODE.get(code) : null;
   const alignClass = align === "right" ? "flex-row-reverse text-right" : "text-left";
   if (!team) {
@@ -38,6 +41,16 @@ export function TeamLabel({
           {team.flag}
         </button>
         <span className="truncate text-sm font-medium">{team.name}</span>
+        {teamHistory && (
+          <button
+            type="button"
+            aria-label={`Historial de ${team.name}`}
+            className="shrink-0 text-ink-500/70 transition hover:text-volt-400"
+            onClick={() => teamHistory.open(team.code)}
+          >
+            <Info aria-hidden className="h-1.5 w-1.5" />
+          </button>
+        )}
       </span>
     </Tooltip>
   );
