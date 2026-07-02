@@ -20,3 +20,4 @@ export {
   knockoutMatchPoints,
   scoreUser,
 } from "./scoring";
+export { buildTeamHistories, type TeamHistoryEntry } from "./team-history";

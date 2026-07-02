@@ -15,6 +15,7 @@ import {
   GROUP_LETTERS,
   allGroupsComplete,
   buildBracket,
+  buildTeamHistories,
   computeGroupStandings,
   groupMatchPoints,
   knockoutMatchPoints,
@@ -46,6 +47,7 @@ import { isSameLocalDay } from "@/lib/format";
 import { savePrediction } from "@/lib/actions/predictions";
 import { MatchCard, type SaveStatus } from "@/components/match-card";
 import { useConfetti } from "@/components/confetti";
+import { TeamHistoryProvider } from "@/components/team-history";
 
 type PhaseKey = Phase | "finals";
 
@@ -142,6 +144,10 @@ export function QuinielaClient({
   );
   const realBracket = useMemo(() => buildBracket(realScoreMap, overridesMap), [realScoreMap, overridesMap]);
   const bracketReady = useMemo(() => allGroupsComplete(scoreMap), [scoreMap]);
+  const teamHistories = useMemo(
+    () => buildTeamHistories(scoreMap, realScoreMap, overridesMap),
+    [scoreMap, realScoreMap, overridesMap],
+  );
 
   const groupFilled = useMemo(
     () => GROUP_MATCH_IDS.filter((id) => predictions[id] !== undefined).length,
@@ -258,7 +264,7 @@ export function QuinielaClient({
   }, [realBracket, predictions, results, overrides, now, saveStatus, setNav]);
 
   return (
-    <>
+    <TeamHistoryProvider histories={teamHistories}>
       <PanamaAutoTrigger />
     <div className="space-y-4">
       {/* phase tabs */}
@@ -310,7 +316,7 @@ export function QuinielaClient({
         </>
       )}
     </div>
-    </>
+    </TeamHistoryProvider>
   );
 }
 

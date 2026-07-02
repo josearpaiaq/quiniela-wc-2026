@@ -150,6 +150,35 @@ body::before {
   );
 }
 
+@keyframes overlay-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.team-history-overlay {
+  animation: overlay-fade-in 0.2s ease-out;
+}
+
+@keyframes sheet-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes dialog-pop-in {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.team-history-content {
+  animation: sheet-slide-up 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 768px) {
+  .team-history-content {
+    animation: dialog-pop-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
 @keyframes confetti-fall {
   0% {
     transform: translateY(-120px) translateX(0) rotate(0deg);
