@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ArrowDownWideNarrow, ArrowUpWideNarrow } from "lucide-react";
 import { TeamLabel } from "@/components/team-label";
 import { formatKickoff } from "@/lib/format";
 import type { Phase } from "@/lib/db/seed-data";
@@ -19,6 +20,7 @@ export type PredictionCard = {
 };
 
 type Filter = "all" | Phase;
+type Order = "asc" | "desc";
 
 const PHASE_LABELS: Record<Phase, string> = {
   group: "Grupos",
@@ -32,6 +34,7 @@ const PHASE_LABELS: Record<Phase, string> = {
 
 export function PredictionList({ cards }: { cards: PredictionCard[] }) {
   const [filter, setFilter] = useState<Filter>("all");
+  const [order, setOrder] = useState<Order>("desc");
 
   const phases = [...new Set(cards.map((c) => c.phase))].filter(
     (p): p is Exclude<Phase, "group"> | "group" => true,
@@ -44,7 +47,13 @@ export function PredictionList({ cards }: { cards: PredictionCard[] }) {
     }
   }
 
-  const filtered = filter === "all" ? cards : cards.filter((c) => c.phase === filter);
+  const filtered = (filter === "all" ? cards : cards.filter((c) => c.phase === filter))
+    .slice()
+    .sort((a, b) =>
+      order === "asc"
+        ? Date.parse(a.kickoffAt) - Date.parse(b.kickoffAt)
+        : Date.parse(b.kickoffAt) - Date.parse(a.kickoffAt),
+    );
 
   return (
     <section className="space-y-2">
@@ -52,6 +61,20 @@ export function PredictionList({ cards }: { cards: PredictionCard[] }) {
         <h3 className="text-[11px] font-medium uppercase tracking-wider text-ink-500">
           Pronósticos visibles ({cards.length})
         </h3>
+        <button
+          type="button"
+          onClick={() => setOrder(order === "desc" ? "asc" : "desc")}
+          aria-label={
+            order === "desc" ? "Ordenar del más antiguo al más reciente" : "Ordenar del más reciente al más antiguo"
+          }
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-line text-ink-500 transition hover:border-line-bright hover:text-ink-300 cursor-pointer"
+        >
+          {order === "desc" ? (
+            <ArrowDownWideNarrow className="h-3.5 w-3.5" aria-hidden />
+          ) : (
+            <ArrowUpWideNarrow className="h-3.5 w-3.5" aria-hidden />
+          )}
+        </button>
       </div>
 
       <div className="flex gap-1 overflow-x-auto pb-0.5">
