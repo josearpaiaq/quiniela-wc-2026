@@ -10,6 +10,16 @@ import type { Phase } from "@/lib/db/seed-data";
 
 export type SaveStatus = "saving" | "saved" | "error" | "pendingWinner" | null;
 
+const PHASE_LABEL: Record<Phase, string> = {
+  group: "Fase de grupos",
+  r32: "Dieciseisavos de final",
+  r16: "Octavos de final",
+  qf: "Cuartos de final",
+  sf: "Semifinales",
+  third: "3er puesto",
+  final: "Final",
+};
+
 export function MatchCard({
   phase,
   kickoffAt,
@@ -109,8 +119,9 @@ export function MatchCard({
         <TeamLabel code={awayCode} align="right" />
       </div>
 
-      <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-ink-500">
+      <div className="mt-2 flex flex-col items-center justify-center gap-0.5 text-[9px] text-ink-500">
         <span>{venue}</span>
+        <span className="text-ink-500/70">{PHASE_LABEL[phase]}</span>
       </div>
 
       {needsWinner && homeCode && awayCode && (
