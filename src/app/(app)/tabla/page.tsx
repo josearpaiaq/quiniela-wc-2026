@@ -1,7 +1,7 @@
 import { eq, inArray } from "drizzle-orm";
 import Link from "next/link";
 import { ArrowRight, Medal } from "lucide-react";
-import { GroupTabs } from "@/components/group-tabs";
+import { GroupSelect } from "@/components/group-select";
 import { requireUser } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
 import { getVisibleGroups } from "@/lib/groups";
@@ -108,11 +108,7 @@ async function TablaContent({
         </p>
       </header>
 
-      <GroupTabs
-        groups={visibleGroups}
-        selectedId={selected.id}
-        hrefFor={(groupId) => `/tabla?grupo=${groupId}`}
-      />
+      <GroupSelect groups={visibleGroups} selectedId={selected.id} basePath="/tabla" />
 
       {standings.length === 0 && (
         <p className="rounded-xl border border-dashed border-line-bright px-4 py-8 text-center text-sm text-ink-500">
