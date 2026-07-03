@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { GroupTabs } from "@/components/group-tabs";
+import { GroupSelect } from "@/components/group-select";
 import { TeamLabel } from "@/components/team-label";
 import { requireUser } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
@@ -140,10 +140,10 @@ async function PartidoContent({
         <h3 className="text-[11px] font-medium uppercase tracking-wider text-ink-500">
           {selected ? `Pronósticos de ${selected.name}` : "Pronósticos del grupo"}
         </h3>
-        <GroupTabs
+        <GroupSelect
           groups={visibleGroups}
           selectedId={selected?.id ?? ""}
-          hrefFor={(groupId) => `/partido/${matchId}?grupo=${groupId}`}
+          basePath={`/partido/${matchId}`}
         />
         {!selected ? (
           <p className="rounded-xl border border-dashed border-line-bright px-4 py-6 text-center text-sm text-ink-500">
