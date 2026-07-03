@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { ArrowDownWideNarrow, ArrowUpWideNarrow } from "lucide-react";
+import { PenaltyBadge } from "@/components/penalty-badge";
 import { TeamLabel } from "@/components/team-label";
 import { formatKickoff } from "@/lib/format";
 import type { Phase } from "@/lib/db/seed-data";
+import type { Side } from "@/lib/tournament";
 
 export type PredictionCard = {
   id: number;
@@ -16,6 +18,7 @@ export type PredictionCard = {
   predictedAway: number;
   realHome: number | null;
   realAway: number | null;
+  realWinnerSide: Side | null;
   points: number | undefined;
 };
 
@@ -188,7 +191,12 @@ export function PredictionList({ cards }: { cards: PredictionCard[] }) {
               </span>
               {card.realHome !== null && (
                 <span className="block font-mono text-[11px] text-ink-500">
-                  real {card.realHome}–{card.realAway}
+                  real {card.realHome}–{card.realAway}{" "}
+                  <PenaltyBadge
+                    winnerSide={card.realWinnerSide}
+                    homeCode={card.homeCode}
+                    awayCode={card.awayCode}
+                  />
                 </span>
               )}
             </span>
