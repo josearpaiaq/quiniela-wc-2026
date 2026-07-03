@@ -1,6 +1,5 @@
 "use client";
 
-import { Info } from "lucide-react";
 import { TEAM_BY_CODE } from "@/lib/dto";
 import { Tooltip } from "./tooltip";
 import { useConfetti } from "./confetti";
@@ -40,16 +39,17 @@ export function TeamLabel({
         >
           {team.flag}
         </button>
-        <span className="truncate text-sm font-medium">{team.name}</span>
-        {teamHistory && (
+        {teamHistory ? (
           <button
             type="button"
             aria-label={`Historial de ${team.name}`}
-            className="shrink-0 text-ink-500/70 transition hover:text-volt-400"
+            className="truncate text-sm font-medium transition hover:text-volt-400 cursor-pointer"
             onClick={() => teamHistory.open(team.code)}
           >
-            <Info aria-hidden className="h-3 w-3" />
+            {team.name}
           </button>
+        ) : (
+          <span className="truncate text-sm font-medium">{team.name}</span>
         )}
       </span>
     </Tooltip>

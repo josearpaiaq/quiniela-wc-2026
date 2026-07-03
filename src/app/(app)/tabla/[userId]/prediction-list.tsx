@@ -19,7 +19,7 @@ export type PredictionCard = {
   points: number | undefined;
 };
 
-type Filter = "all" | Phase;
+type Filter = "all" | "exact" | Phase;
 type Order = "asc" | "desc";
 
 const PHASE_LABELS: Record<Phase, string> = {
@@ -31,6 +31,15 @@ const PHASE_LABELS: Record<Phase, string> = {
   third: "3er puesto",
   final: "Final",
 };
+
+function isExactMatch(card: PredictionCard) {
+  return (
+    card.realHome !== null &&
+    card.realAway !== null &&
+    card.predictedHome === card.realHome &&
+    card.predictedAway === card.realAway
+  );
+}
 
 export function PredictionList({ cards }: { cards: PredictionCard[] }) {
   const [filter, setFilter] = useState<Filter>("all");
@@ -47,7 +56,15 @@ export function PredictionList({ cards }: { cards: PredictionCard[] }) {
     }
   }
 
-  const filtered = (filter === "all" ? cards : cards.filter((c) => c.phase === filter))
+  const exactCount = cards.filter(isExactMatch).length;
+
+  const filtered = (
+    filter === "all"
+      ? cards
+      : filter === "exact"
+        ? cards.filter(isExactMatch)
+        : cards.filter((c) => c.phase === filter)
+  )
     .slice()
     .sort((a, b) =>
       order === "asc"
@@ -89,6 +106,20 @@ export function PredictionList({ cards }: { cards: PredictionCard[] }) {
         >
           Todos
         </button>
+        <button
+          type="button"
+          onClick={() => setFilter("exact")}
+          className={`shrink-0 rounded-md px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider transition ${
+            filter === "exact"
+              ? "bg-volt-400 text-pitch-950"
+              : "text-ink-500 hover:text-ink-300"
+          }`}
+        >
+          Marcador exacto
+          <span className={`ml-1 font-mono ${filter === "exact" ? "text-pitch-950/70" : "text-volt-400"}`}>
+            {exactCount}
+          </span>
+        </button>
         {phases.map((phase) => {
           const pts = pointsByPhase.get(phase);
           return (
@@ -115,7 +146,9 @@ export function PredictionList({ cards }: { cards: PredictionCard[] }) {
 
       {filtered.length === 0 && (
         <p className="rounded-xl border border-dashed border-line-bright px-4 py-6 text-center text-sm text-ink-500">
-          Todavía no hay pronósticos visibles en esta fase.
+          {filter === "exact"
+            ? "Todavía no ha pegado ningún marcador exacto."
+            : "Todavía no hay pronósticos visibles en esta fase."}
         </p>
       )}
 
@@ -149,7 +182,7 @@ export function PredictionList({ cards }: { cards: PredictionCard[] }) {
           </div>
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
             <TeamLabel code={card.homeCode} />
-            <span className="text-center">
+            <span className="whitespace-nowrap text-center">
               <span className="font-mono font-semibold">
                 {card.predictedHome}–{card.predictedAway}
               </span>

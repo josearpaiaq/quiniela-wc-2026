@@ -102,11 +102,11 @@ function TeamHistoryModal({
           {team && (
             <>
               <div className="mb-3 flex items-center justify-between gap-2">
-                <Dialog.Title className="flex items-center gap-2 font-display text-base font-bold">
-                  <span aria-hidden className="text-2xl leading-none">
+                <Dialog.Title className="flex min-w-0 items-center gap-2 font-display text-base font-bold">
+                  <span aria-hidden className="shrink-0 text-2xl leading-none">
                     {team.flag}
                   </span>
-                  {team.name}
+                  <span className="truncate">{team.name}</span>
                 </Dialog.Title>
                 <Dialog.Close asChild>
                   <button
@@ -142,13 +142,16 @@ function TeamHistoryModal({
                               className="flex items-center justify-between gap-2 rounded-lg border border-line/60 bg-pitch-800/50 px-2.5 py-2"
                             >
                               <span className="flex min-w-0 items-center gap-1.5 text-sm">
-                                <span aria-hidden>{opponent?.flag}</span>
-                                <span className="truncate">{opponent?.name}</span>
-                              </span>
-                              <span className="flex shrink-0 items-center gap-2 text-xs">
+                                <span aria-hidden>{team?.flag}</span>
                                 <span className="font-mono font-semibold text-ink-100">
                                   {entry.teamScore}–{entry.opponentScore}
                                 </span>
+                                <span className="truncate">{opponent?.name}</span>
+                                <span aria-hidden className="shrink-0 text-base leading-none">
+                                  {opponent?.flag}
+                                </span>
+                              </span>
+                              <span className="flex shrink-0 items-center gap-2 text-xs">
                                 {entry.predictedTeamScore !== null && (
                                   <span className="font-mono text-ink-500">
                                     (tu: {entry.predictedTeamScore}–{entry.predictedOpponentScore})

@@ -153,10 +153,10 @@ export function BracketView({
       <div className="flex items-center justify-center gap-3 rounded-xl border border-gold-400/40 bg-gradient-to-r from-pitch-900 via-pitch-800 to-pitch-900 px-4 py-3">
         <Trophy aria-hidden className="h-7 w-7 text-gold-400" />
         {champion ? (
-          <p className="font-display text-lg font-extrabold uppercase">
-            <span aria-hidden className="mr-2">{champion.flag}</span>
-            {champion.name}
-            <span className="ml-2 text-xs font-bold uppercase tracking-widest text-gold-400">
+          <p className="flex min-w-0 items-center font-display text-lg font-extrabold uppercase">
+            <span aria-hidden className="mr-2 shrink-0">{champion.flag}</span>
+            <span className="truncate">{champion.name}</span>
+            <span className="ml-2 shrink-0 text-xs font-bold uppercase tracking-widest text-gold-400">
               Campeón
             </span>
           </p>
@@ -195,17 +195,19 @@ export function BracketView({
       {/* third place */}
       <div className="flex items-center gap-3 rounded-xl border border-line bg-pitch-900 px-4 py-3">
         <Medal aria-hidden className="h-5 w-5 shrink-0 text-[#cd7f32]" />
-        <div className="text-sm">
+        <div className="min-w-0 text-sm">
           <p className="text-[10px] uppercase tracking-wider text-ink-500">Tercer puesto</p>
           {third?.home && third.away ? (
-            <p>
-              {TEAM_BY_CODE.get(third.home)?.flag} {TEAM_BY_CODE.get(third.home)?.name}
-              <span className="mx-2 font-mono text-ink-500">
+            <p className="flex min-w-0 flex-wrap items-center gap-x-1">
+              <span aria-hidden>{TEAM_BY_CODE.get(third.home)?.flag}</span>
+              <span className="max-w-[7rem] truncate">{TEAM_BY_CODE.get(third.home)?.name}</span>
+              <span className="mx-1 font-mono text-ink-500">
                 {scores[103] ? `${scores[103].home}–${scores[103].away}` : "vs"}
               </span>
-              {TEAM_BY_CODE.get(third.away)?.flag} {TEAM_BY_CODE.get(third.away)?.name}
+              <span aria-hidden>{TEAM_BY_CODE.get(third.away)?.flag}</span>
+              <span className="max-w-[7rem] truncate">{TEAM_BY_CODE.get(third.away)?.name}</span>
               {thirdWinner && (
-                <span className="ml-2 text-xs text-gold-400">
+                <span className="ml-2 max-w-[9rem] truncate text-xs text-gold-400">
                   gana {TEAM_BY_CODE.get(thirdWinner === "home" ? third.home : third.away)?.name}
                 </span>
               )}
