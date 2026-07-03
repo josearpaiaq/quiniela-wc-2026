@@ -1,7 +1,7 @@
 import { MATCHES, type Phase } from "../db/seed-data";
 import { buildBracket, KNOCKOUT_MATCHES } from "./bracket";
 import { groupMatchPoints, knockoutMatchPoints } from "./scoring";
-import type { BracketOverrides, ScoreMap } from "./types";
+import type { BracketOverrides, ScoreMap, Side } from "./types";
 
 const GROUP_MATCHES = MATCHES.filter((m) => m.phase === "group");
 
@@ -14,6 +14,10 @@ export interface TeamHistoryEntry {
   predictedTeamScore: number | null;
   predictedOpponentScore: number | null;
   points: number | null;
+  /** Match's actual home/away codes and penalty winner, for PenaltyBadge. */
+  homeCode: string;
+  awayCode: string;
+  winnerSide: Side | null;
 }
 
 function matchPoints(
@@ -58,6 +62,9 @@ export function buildTeamHistories(
         predictedTeamScore: predicted ? (isHome ? predicted.home : predicted.away) : null,
         predictedOpponentScore: predicted ? (isHome ? predicted.away : predicted.home) : null,
         points,
+        homeCode,
+        awayCode,
+        winnerSide: real.winnerSide ?? null,
       });
     }
   };

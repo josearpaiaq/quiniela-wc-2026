@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, Check, Lock } from "lucide-react";
+import { PenaltyBadge } from "./penalty-badge";
 import { ScoreStepper } from "./score-stepper";
 import { TeamLabel } from "./team-label";
 import { TEAM_BY_CODE, type ScoreDTO } from "@/lib/dto";
@@ -155,15 +156,18 @@ export function MatchCard({
       )}
 
       {!open && (result || detailsHref) && (
-        <footer className="mt-2.5 flex items-center justify-center gap-2 border-t border-line/60 pt-2 text-xs">
+        <footer className="mt-2.5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 border-t border-line/60 pt-2 text-xs">
           {result && (
-            <span className="text-ink-500">
+            <span className="shrink-0 whitespace-nowrap text-ink-500">
               Real: <span className="font-mono font-semibold text-ink-100">{result.home}–{result.away}</span>
             </span>
           )}
+          {result && (
+            <PenaltyBadge winnerSide={result.winnerSide} homeCode={homeCode} awayCode={awayCode} />
+          )}
           {result && matchPoints !== null && (
             <span
-              className={`rounded-full px-2 py-0.5 font-mono font-semibold ${
+              className={`shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 font-mono font-semibold ${
                 matchPoints > 1
                   ? "bg-volt-400/15 text-volt-400"
                   : matchPoints === 1
@@ -177,9 +181,9 @@ export function MatchCard({
           {detailsHref && (
             <Link
               href={detailsHref}
-              className="inline-flex items-center gap-1 text-ink-500 underline-offset-2 hover:text-volt-400 hover:underline"
+              className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-ink-500 underline-offset-2 hover:text-volt-400 hover:underline"
             >
-              Ver pronósticos de todos <ArrowRight aria-hidden className="h-3.5 w-3.5" />
+              Ver todos <ArrowRight aria-hidden className="h-3.5 w-3.5" />
             </Link>
           )}
         </footer>

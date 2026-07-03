@@ -3,12 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { GroupSelect } from "@/components/group-select";
+import { PenaltyBadge } from "@/components/penalty-badge";
 import { TeamLabel } from "@/components/team-label";
 import { requireUser } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
 import { getVisibleGroups } from "@/lib/groups";
 import { MATCHES } from "@/lib/db/seed-data";
-import { TEAM_BY_CODE } from "@/lib/dto";
 import { formatKickoff, shortVenue } from "@/lib/format";
 import { isPredictionVisibleToOthers } from "@/lib/rules";
 import { overrideRowsToMap, rowsToScoreMap } from "@/lib/score-rows";
@@ -130,6 +130,9 @@ async function PartidoContent({
               <span className="whitespace-nowrap font-mono text-xl font-bold">
                 {real ? `${real.home}–${real.away}` : "vs"}
               </span>
+              {real && (
+                <PenaltyBadge winnerSide={real.winnerSide} homeCode={slot.home} awayCode={slot.away} />
+              )}
             </div>
             <TeamLabel code={slot.away} align="right" />
           </div>
@@ -195,17 +198,11 @@ async function PartidoContent({
                     <span className="font-mono font-semibold">
                       {row.prediction.home}–{row.prediction.away}
                     </span>
-                    {row.prediction.winnerSide && (
-                      <span className="text-[11px] text-gold-400" title="Avanza en penales">
-                        pen{" "}
-                        {(() => {
-                          const code =
-                            row.prediction.winnerSide === "home" ? slot.home : slot.away;
-                          return code ? TEAM_BY_CODE.get(code)?.flag : null;
-                        })() ??
-                          (row.prediction.winnerSide === "home" ? "local" : "visita")}
-                      </span>
-                    )}
+                    <PenaltyBadge
+                      winnerSide={row.prediction.winnerSide}
+                      homeCode={slot.home}
+                      awayCode={slot.away}
+                    />
                   </>
                 ) : (
                   <span className="text-ink-500/60">—</span>

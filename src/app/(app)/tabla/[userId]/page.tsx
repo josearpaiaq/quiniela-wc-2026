@@ -157,6 +157,7 @@ export default async function QuinielaAjenaPage({
         predictedAway: prediction.away,
         realHome: real?.home ?? null,
         realAway: real?.away ?? null,
+        realWinnerSide: real?.winnerSide ?? null,
         points: pointsByMatch.get(m.id),
       };
     });

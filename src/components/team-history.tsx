@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
+import { PenaltyBadge } from "@/components/penalty-badge";
 import { TEAM_BY_CODE } from "@/lib/dto";
 import type { Phase } from "@/lib/db/seed-data";
 import type { TeamHistoryEntry } from "@/lib/tournament/team-history";
@@ -150,6 +151,11 @@ function TeamHistoryModal({
                                 <span aria-hidden className="shrink-0 text-base leading-none">
                                   {opponent?.flag}
                                 </span>
+                                <PenaltyBadge
+                                  winnerSide={entry.winnerSide}
+                                  homeCode={entry.homeCode}
+                                  awayCode={entry.awayCode}
+                                />
                               </span>
                               <span className="flex shrink-0 items-center gap-2 text-xs">
                                 {entry.predictedTeamScore !== null && (
