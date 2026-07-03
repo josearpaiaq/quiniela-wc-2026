@@ -91,7 +91,7 @@ export function MatchCard({
 
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
         <TeamLabel code={homeCode} />
-        <div className="flex items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-1.5">
           <ScoreStepper
             label={homeCode ?? "local"}
             value={score?.home ?? null}
@@ -128,13 +128,14 @@ export function MatchCard({
                   key={side}
                   type="button"
                   onClick={() => onWinner(side)}
-                  className={`rounded-lg border px-2 py-1.5 text-xs font-medium transition active:scale-[0.98] ${
+                  className={`flex min-w-0 items-center justify-center gap-1 rounded-lg border px-2 py-1.5 text-xs font-medium transition active:scale-[0.98] ${
                     selected
                       ? "border-gold-400 bg-gold-400/15 text-gold-400"
                       : "border-line text-ink-300 hover:border-gold-400/50"
                   }`}
                 >
-                  {team?.flag} {team?.name}
+                  <span aria-hidden className="shrink-0">{team?.flag}</span>
+                  <span className="truncate">{team?.name}</span>
                 </button>
               );
             })}

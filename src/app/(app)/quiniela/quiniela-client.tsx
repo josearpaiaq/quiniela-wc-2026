@@ -432,7 +432,7 @@ const GroupsPanel = forwardRef<HTMLDivElement, {
               return (
                 <tr key={row.code} className="border-b border-line/40 last:border-0">
                   <td className="px-3 py-2">
-                    <span className="flex items-center gap-2">
+                    <span className="flex min-w-0 items-center gap-2">
                       <span
                         className={`font-mono text-xs ${
                           qualifies ? "font-bold text-volt-400" : row.position === 3 ? "text-gold-400" : "text-ink-500"
@@ -441,7 +441,9 @@ const GroupsPanel = forwardRef<HTMLDivElement, {
                         {row.position}
                       </span>
                       <span aria-hidden>{team.flag}</span>
-                      <span className={qualifies ? "font-medium" : ""}>{team.name}</span>
+                      <span className={`max-w-[9rem] truncate sm:max-w-none ${qualifies ? "font-medium" : ""}`}>
+                        {team.name}
+                      </span>
                     </span>
                   </td>
                   <td className="px-2 py-2 text-center font-mono text-ink-500">{row.played}</td>
@@ -747,7 +749,7 @@ function ThirdPlaceRankingPanel({
                     )}
                     <tr className="border-b border-line/40 last:border-0">
                       <td className="px-3 py-2">
-                        <span className="flex items-center gap-2">
+                        <span className="flex min-w-0 items-center gap-2">
                           <span
                             className={`w-4 text-right font-mono text-xs ${
                               row.qualified ? "font-bold text-volt-400" : "text-ink-500"
@@ -756,7 +758,11 @@ function ThirdPlaceRankingPanel({
                             {row.rank}
                           </span>
                           <span aria-hidden>{team.flag}</span>
-                          <span className={row.qualified ? "font-medium" : "text-ink-400"}>
+                          <span
+                            className={`max-w-[9rem] truncate sm:max-w-none ${
+                              row.qualified ? "font-medium" : "text-ink-400"
+                            }`}
+                          >
                             {team.name}
                           </span>
                           {"incomplete" in row && row.incomplete && (

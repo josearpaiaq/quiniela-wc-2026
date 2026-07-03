@@ -102,11 +102,11 @@ function TeamHistoryModal({
           {team && (
             <>
               <div className="mb-3 flex items-center justify-between gap-2">
-                <Dialog.Title className="flex items-center gap-2 font-display text-base font-bold">
-                  <span aria-hidden className="text-2xl leading-none">
+                <Dialog.Title className="flex min-w-0 items-center gap-2 font-display text-base font-bold">
+                  <span aria-hidden className="shrink-0 text-2xl leading-none">
                     {team.flag}
                   </span>
-                  {team.name}
+                  <span className="truncate">{team.name}</span>
                 </Dialog.Title>
                 <Dialog.Close asChild>
                   <button

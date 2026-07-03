@@ -182,7 +182,7 @@ export function PredictionList({ cards }: { cards: PredictionCard[] }) {
           </div>
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
             <TeamLabel code={card.homeCode} />
-            <span className="text-center">
+            <span className="whitespace-nowrap text-center">
               <span className="font-mono font-semibold">
                 {card.predictedHome}–{card.predictedAway}
               </span>

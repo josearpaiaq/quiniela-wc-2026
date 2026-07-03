@@ -126,8 +126,8 @@ async function PartidoContent({
           </p>
           <div className="flex items-center justify-between gap-2">
             <TeamLabel code={slot.home} />
-            <div className="flex flex-col items-center gap-0.5">
-              <span className="font-mono text-xl font-bold">
+            <div className="flex shrink-0 flex-col items-center gap-0.5">
+              <span className="whitespace-nowrap font-mono text-xl font-bold">
                 {real ? `${real.home}–${real.away}` : "vs"}
               </span>
             </div>
