@@ -183,7 +183,7 @@ export function MatchCard({
               href={detailsHref}
               className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-ink-500 underline-offset-2 hover:text-volt-400 hover:underline"
             >
-              Ver todos <ArrowRight aria-hidden className="h-3.5 w-3.5" />
+              Pronósticos <ArrowRight aria-hidden className="h-3.5 w-3.5" />
             </Link>
           )}
         </footer>
