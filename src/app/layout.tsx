@@ -24,9 +24,33 @@ const chivoMono = Chivo_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://quiniela-wc-2026-lovat.vercel.app"),
   title: "Quiniela Mundial 2026",
   description:
     "La quiniela del Mundial 2026 entre amigos: pronostica los 104 partidos, arma tu bracket y pelea la tabla.",
+  openGraph: {
+    type: "website",
+    url: "https://quiniela-wc-2026-lovat.vercel.app",
+    title: "Quiniela Mundial 2026",
+    description:
+      "La quiniela del Mundial 2026 entre amigos: pronostica los 104 partidos, arma tu bracket y pelea la tabla.",
+    siteName: "Quiniela Mundial 2026",
+    locale: "es_LA",
+    images: [
+      {
+        url: "https://quiniela-wc-2026-lovat.vercel.app/og.png",
+        width: 1200,
+        height: 630,
+        alt: "Quiniela Mundial 2026",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Quiniela Mundial 2026",
+    description: "La quiniela del Mundial 2026 entre amigos.",
+    images: ["https://quiniela-wc-2026-lovat.vercel.app/og.png"],
+  },
 };
 
 export const viewport: Viewport = {
