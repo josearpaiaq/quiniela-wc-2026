@@ -43,6 +43,18 @@ function localDateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+/** Sorts today's matches to the front, then chronologically by kickoff. */
+function compareTodayFirst(todayKey: string | null) {
+  return (a: (typeof MATCHES)[number], b: (typeof MATCHES)[number]) => {
+    if (todayKey) {
+      const aToday = localDateKey(new Date(a.kickoffAt)) === todayKey;
+      const bToday = localDateKey(new Date(b.kickoffAt)) === todayKey;
+      if (aToday !== bToday) return aToday ? -1 : 1;
+    }
+    return Date.parse(a.kickoffAt) - Date.parse(b.kickoffAt) || a.id - b.id;
+  };
+}
+
 import { isSameLocalDay } from "@/lib/format";
 import { savePrediction } from "@/lib/actions/predictions";
 import { MatchCard, type SaveStatus } from "@/components/match-card";
@@ -68,27 +80,6 @@ function hasSeenConfettiToday(dateKey: string): boolean {
     return false;
   }
 }
-
-function markConfettiSeen(dateKey: string): void {
-  try {
-    localStorage.setItem(CONFETTI_SEEN_KEY, dateKey);
-  } catch {}
-}
-
-
-function PanamaAutoTrigger() {
-  const { trigger } = useConfetti();
-  useEffect(() => {
-    const dateKey = localDateKey(new Date());
-    if (PAN_MATCH_DAYS.has(dateKey) && !hasSeenConfettiToday(dateKey)) {
-      trigger("🇵🇦");
-      markConfettiSeen(dateKey);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  return null;
-}
-
 
 function matchTag(match: (typeof MATCHES)[number]): React.ReactNode {
   if (match.phase === "third") return "3er puesto";
@@ -181,6 +172,7 @@ export function QuinielaClient({
     () => true,
     () => false,
   );
+  const todayKey = mounted ? localDateKey(new Date(now)) : null;
   function scheduleSave(matchId: number, next: ScoreDTO, phase: Phase) {
     const isKnockout = phase !== "group";
     const needsWinner = isKnockout && next.home === next.away && !next.winnerSide;
@@ -234,6 +226,7 @@ export function QuinielaClient({
     const real = results[match.id];
     const teamsReady = match.phase === "group" || (slot?.home != null && slot?.away != null);
     const open = overrides.has(match.id) || (now < Date.parse(match.kickoffAt) && teamsReady);
+    const isToday = mounted && isSameLocalDay(new Date(match.kickoffAt), new Date(now));
     return (
       <MatchCard
         key={match.id}
@@ -241,6 +234,7 @@ export function QuinielaClient({
         kickoffAt={match.kickoffAt}
         venue={match.venue}
         tag={tag}
+        isToday={isToday}
         group={match.phase === "group" ? match.group : undefined}
         onGroupClick={
           match.phase === "group" && match.group
@@ -274,11 +268,10 @@ export function QuinielaClient({
         onWinner={(side) => setWinner(match.id, match.phase, side)}
       />
     );
-  }, [realBracket, predictions, results, overrides, now, saveStatus, setNav]);
+  }, [realBracket, predictions, results, overrides, now, mounted, saveStatus, setNav]);
 
   return (
     <TeamHistoryProvider histories={teamHistories}>
-      <PanamaAutoTrigger />
     <div className="space-y-4">
       {/* phase tabs */}
       <div className="sticky top-[57px] z-20 -mx-4 overflow-x-auto border-b border-line bg-pitch-950/95 px-4 backdrop-blur">
@@ -320,13 +313,14 @@ export function QuinielaClient({
             scoreMap={scoreMap}
             realScoreMap={realScoreMap}
             renderCard={renderCard}
+            todayKey={todayKey}
             ref={groupsPanelRef}
           />
         </>
       ) : (
         <>
           <SectionSeparator label={PHASES.find((p) => p.key === tab)?.label ?? "Eliminación directa"} />
-          <KnockoutPanel tab={tab} renderCard={renderCard} />
+          <KnockoutPanel tab={tab} renderCard={renderCard} todayKey={todayKey} />
         </>
       )}
     </div>
@@ -341,6 +335,7 @@ const GroupsPanel = forwardRef<HTMLDivElement, {
   scoreMap: Map<number, { home: number; away: number }>;
   realScoreMap: Map<number, { home: number; away: number }>;
   renderCard: (match: (typeof MATCHES)[number], tag: React.ReactNode) => React.ReactNode;
+  todayKey: string | null;
 }>(function GroupsPanel({
   group,
   onGroup,
@@ -348,6 +343,7 @@ const GroupsPanel = forwardRef<HTMLDivElement, {
   scoreMap,
   realScoreMap,
   renderCard,
+  todayKey,
 }, ref) {
   const [view, setView] = useQueryState(
     "gv",
@@ -357,9 +353,9 @@ const GroupsPanel = forwardRef<HTMLDivElement, {
   const standings = useMemo(() => computeGroupStandings(group, activeMap), [group, activeMap]);
   const matches = useMemo(
     () => MATCHES.filter((m) => m.phase === "group" && m.group === group).sort(
-      (a, b) => Date.parse(a.kickoffAt) - Date.parse(b.kickoffAt),
+      compareTodayFirst(todayKey),
     ),
-    [group],
+    [group, todayKey],
   );
   const filledByGroup = useMemo(() => {
     const map: Record<string, number> = {};
@@ -489,15 +485,17 @@ const GroupsPanel = forwardRef<HTMLDivElement, {
 function KnockoutPanel({
   tab,
   renderCard,
+  todayKey,
 }: {
   tab: PhaseKey;
   renderCard: (match: (typeof MATCHES)[number], tag: React.ReactNode) => React.ReactNode;
+  todayKey: string | null;
 }) {
   const matches = useMemo(
     () => MATCHES.filter((m) =>
       tab === "finals" ? m.phase === "third" || m.phase === "final" : m.phase === tab,
-    ).sort((a, b) => a.id - b.id),
-    [tab],
+    ).sort(compareTodayFirst(todayKey)),
+    [tab, todayKey],
   );
 
   return (
@@ -567,7 +565,7 @@ const DayMatchesPanel = memo(function DayMatchesPanel({
     setDayParam(key === todayKey ? null : key);
   };
 
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const activeDay = allDays.find((d) => d.key === activeKey);
   const activeIndex = allDays.findIndex((d) => d.key === activeKey);
 

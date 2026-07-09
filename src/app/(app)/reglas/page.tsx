@@ -1,5 +1,6 @@
 import {
   ALL_KNOCKOUT_SCORED_MATCH_IDS,
+  FINAL_EXACT_POINTS,
   GROUP_EXACT_POINTS,
   GROUP_OUTCOME_POINTS,
   KNOCKOUT_EXACT_POINTS,
@@ -116,6 +117,12 @@ export default function ReglasPage() {
             points={KNOCKOUT_EXACT_POINTS}
           />
           <ScoreRow
+            label="Marcador exacto — final"
+            description="La final vale distinto: acertar su marcador exacto da más puntos"
+            example="Pronosticaste 2-1, la final terminó 2-1"
+            points={FINAL_EXACT_POINTS}
+          />
+          <ScoreRow
             label="Marcador incorrecto"
             description="El resultado final no coincide con tu pronóstico"
             example="Pronosticaste 2-1, terminó 1-1 (penales)"
@@ -141,13 +148,15 @@ export default function ReglasPage() {
             4 * ROUND_VALUES.sf +
             2 * ROUND_VALUES.final +
             ROUND_VALUES.champion +
-            ALL_KNOCKOUT_SCORED_MATCH_IDS.length * KNOCKOUT_EXACT_POINTS}{" "}
+            (ALL_KNOCKOUT_SCORED_MATCH_IDS.length - 1) * KNOCKOUT_EXACT_POINTS +
+            FINAL_EXACT_POINTS}{" "}
           <span className="text-sm font-normal text-ink-400">puntos</span>
         </p>
         <p className="mt-1 text-[11px] text-ink-500">
           Si acertaras el marcador exacto de los 72 partidos de grupos y el tercer lugar, todos
           los avances de eliminación y el marcador exacto de los{" "}
-          {ALL_KNOCKOUT_SCORED_MATCH_IDS.length} partidos de eliminación directa.
+          {ALL_KNOCKOUT_SCORED_MATCH_IDS.length} partidos de eliminación directa (la final vale{" "}
+          {FINAL_EXACT_POINTS} pts en vez de {KNOCKOUT_EXACT_POINTS}).
         </p>
       </section>
     </div>

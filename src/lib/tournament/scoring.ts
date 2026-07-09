@@ -13,6 +13,8 @@ import { ROUND_VALUES } from "./types";
 export const GROUP_EXACT_POINTS = 3;
 export const GROUP_OUTCOME_POINTS = 1;
 export const KNOCKOUT_EXACT_POINTS = 3;
+/** The final's exact-score bonus is boosted vs. the other knockout rounds. */
+export const FINAL_EXACT_POINTS = 10;
 
 const GROUP_MATCHES = MATCHES.filter((m) => m.phase === "group");
 const THIRD_PLACE_MATCH = MATCHES.find((m) => m.phase === "third")!
@@ -24,6 +26,8 @@ const ROUND_MATCH_IDS: Record<Exclude<ScoredRound, "champion">, number[]> = {
   sf: MATCHES.filter((m) => m.phase === "sf").map((m) => m.id),
   final: [104],
 };
+
+const FINAL_MATCH_IDS = new Set(ROUND_MATCH_IDS.final);
 
 export const ALL_KNOCKOUT_SCORED_MATCH_IDS: readonly number[] = [
   ...ROUND_MATCH_IDS.r32,
@@ -164,7 +168,9 @@ export function scoreUser(
     const real = results.get(id);
     if (!predicted || !real) continue;
     const pts =
-      predicted.home === real.home && predicted.away === real.away ? KNOCKOUT_EXACT_POINTS : 0;
+      predicted.home === real.home && predicted.away === real.away
+        ? (FINAL_MATCH_IDS.has(id) ? FINAL_EXACT_POINTS : KNOCKOUT_EXACT_POINTS)
+        : 0;
     knockoutExactByMatch.set(id, pts);
     knockoutExactPoints += pts;
   }
@@ -198,6 +204,8 @@ export function knockoutMatchPoints(
   const advance =
     realSide !== null && pickSide(predicted) === realSide ? NEXT_ROUND_VALUE[phase] : 0;
   const exact =
-    predicted.home === real.home && predicted.away === real.away ? KNOCKOUT_EXACT_POINTS : 0;
+    predicted.home === real.home && predicted.away === real.away
+      ? (phase === "final" ? FINAL_EXACT_POINTS : KNOCKOUT_EXACT_POINTS)
+      : 0;
   return advance + exact;
 }
