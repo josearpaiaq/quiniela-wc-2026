@@ -116,13 +116,26 @@ export function QuinielaClient({
   const [predictions, setPredictions] = useState<ScoreRecord>(initialPredictions);
   const [{ tab, group }, setNav] = useQueryStates(
     {
-      tab: parseAsStringLiteral(VALID_TABS).withDefault(getActivePhase(new Date())),
+      tab: parseAsStringLiteral(VALID_TABS).withDefault("r16"),
       group: parseAsStringLiteral(GROUP_LETTERS).withDefault("A"),
     },
     { shallow: true },
   );
-  const setTab = (t: PhaseKey) => setNav({ tab: t as (typeof VALID_TABS)[number] });
+  const userChangedTab = useRef(false);
+  const setTab = (t: PhaseKey) => {
+    userChangedTab.current = true;
+    setNav({ tab: t as (typeof VALID_TABS)[number] });
+  };
   const setGroup = (g: GroupLetter) => setNav({ group: g });
+  const activeTabButtonRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    activeTabButtonRef.current?.scrollIntoView({
+      behavior: userChangedTab.current ? "smooth" : "instant",
+      block: "nearest",
+      inline: "center",
+    });
+    userChangedTab.current = false;
+  }, [tab]);
   const [saveStatus, setSaveStatus] = useState<Record<number, SaveStatus>>({});
   const timers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   const overrides = useMemo(() => new Set(openOverrides), [openOverrides]);
@@ -275,6 +288,7 @@ export function QuinielaClient({
             return (
               <button
                 key={phase.key}
+                ref={active ? activeTabButtonRef : undefined}
                 type="button"
                 onClick={() => setTab(phase.key)}
                 className={`whitespace-nowrap rounded-full px-3.5 py-1.5 font-display text-xs font-bold uppercase tracking-wider transition ${
