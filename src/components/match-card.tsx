@@ -91,7 +91,11 @@ export function MatchCard({
             </button>
           )}
           {isToday && (
-            <span className="today-bounce inline-block rounded bg-gold-400/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-gold-400">
+            <span
+              className={`inline-block rounded bg-gold-400/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-gold-400 ${
+                score === undefined ? "animate-bounce" : ""
+              }`}
+            >
               Hoy
             </span>
           )}
