@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { MATCHES } from "../db/seed-data";
-import { ALL_KNOCKOUT_SCORED_MATCH_IDS, groupMatchPoints, scoreUser } from "./scoring";
+import {
+  ALL_KNOCKOUT_SCORED_MATCH_IDS,
+  groupMatchPoints,
+  knockoutMatchPoints,
+  scoreUser,
+} from "./scoring";
 import type { Score } from "./types";
 
 /** Deterministic full tournament: home wins every match (varied scores). */
@@ -53,16 +58,50 @@ describe("scoreUser — group stage", () => {
   });
 });
 
+describe("knockoutMatchPoints", () => {
+  it("pays the standard +3 exact bonus outside the final", () => {
+    // advance points for the *next* round: r32→r16(2), r16→qf(3), qf→sf(4), sf→final(6)
+    const nextRoundAdvance = { r32: 2, r16: 3, qf: 4, sf: 6 } as const;
+    for (const phase of ["r32", "r16", "qf", "sf"] as const) {
+      const pts = knockoutMatchPoints(
+        phase,
+        { home: 2, away: 1, winnerSide: null },
+        { home: 2, away: 1, winnerSide: null },
+      );
+      expect(pts).toBe(nextRoundAdvance[phase] + 3);
+    }
+  });
+
+  it("pays +10 for an exact final score instead of the usual +3", () => {
+    const exactPts = knockoutMatchPoints(
+      "final",
+      { home: 2, away: 1, winnerSide: null },
+      { home: 2, away: 1, winnerSide: null },
+    );
+    const missedScorePts = knockoutMatchPoints(
+      "final",
+      { home: 1, away: 1, winnerSide: "home" },
+      { home: 2, away: 1, winnerSide: null },
+    );
+    // exact match adds 10 (bonus) on top of the champion advance points (8)
+    expect(exactPts).toBe(18);
+    // right winner, wrong score: only the advance points, no exact bonus
+    expect(missedScorePts).toBe(8);
+  });
+});
+
 describe("scoreUser — advancement", () => {
-  it("a perfect prediction earns the theoretical maximum of 436", () => {
+  it("a perfect prediction earns the theoretical maximum of 443", () => {
     const tournament = fullTournament();
     const score = scoreUser(tournament, tournament);
     // 72 group matches + 1 third-place match, all exact
     expect(score.groupPoints).toBe(72 * 3 + 3);
     // 32×1 + 16×2 + 8×3 + 4×4 + 2×6 + champion 8 = 124
     expect(score.advancePoints).toBe(124);
-    expect(score.knockoutExactPoints).toBe(ALL_KNOCKOUT_SCORED_MATCH_IDS.length * 3);
-    expect(score.total).toBe(343 + ALL_KNOCKOUT_SCORED_MATCH_IDS.length * 3);
+    // every knockout match exact except the final, which pays 10 instead of 3
+    const knockoutExactMax = (ALL_KNOCKOUT_SCORED_MATCH_IDS.length - 1) * 3 + 10;
+    expect(score.knockoutExactPoints).toBe(knockoutExactMax);
+    expect(score.total).toBe(343 + knockoutExactMax);
     expect(score.advanceByRound.get("champion")!.points).toBe(8);
   });
 

@@ -8,6 +8,7 @@ import { TeamLabel } from "./team-label";
 import { TEAM_BY_CODE, type ScoreDTO } from "@/lib/dto";
 import { formatKickoff, shortVenue } from "@/lib/format";
 import type { Phase } from "@/lib/db/seed-data";
+import { FINAL_EXACT_POINTS, KNOCKOUT_EXACT_POINTS } from "@/lib/tournament/scoring";
 
 export type SaveStatus = "saving" | "saved" | "error" | "pendingWinner" | null;
 
@@ -36,6 +37,7 @@ export function MatchCard({
   result,
   matchPoints,
   detailsHref,
+  isToday,
   onScore,
   onWinner,
 }: {
@@ -56,6 +58,8 @@ export function MatchCard({
   matchPoints: number | null;
   /** when set (locked matches), links to the everyone's-predictions page */
   detailsHref?: string;
+  /** highlights the card when the match kicks off today */
+  isToday?: boolean;
   onScore: (side: "home" | "away", value: number) => void;
   onWinner: (side: "home" | "away") => void;
 }) {
@@ -85,6 +89,11 @@ export function MatchCard({
             >
               Gr {group}
             </button>
+          )}
+          {isToday && (
+            <span className="today-bounce inline-block rounded bg-gold-400/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-gold-400">
+              Hoy
+            </span>
           )}
           <time suppressHydrationWarning>{formatKickoff(kickoffAt)}</time>
         </span>
@@ -124,6 +133,13 @@ export function MatchCard({
         <span>{venue}</span>
         <span className="text-ink-500/70">{PHASE_LABEL[phase]}</span>
       </div>
+
+      {phase === "final" && (
+        <p className="mt-2 text-center text-[10px] text-gold-400">
+          El marcador exacto de la final vale +{FINAL_EXACT_POINTS} pts (en vez de +
+          {KNOCKOUT_EXACT_POINTS})
+        </p>
+      )}
 
       {needsWinner && homeCode && awayCode && (
         <div className="mt-3 rounded-lg border border-gold-400/30 bg-gold-400/5 p-2.5">

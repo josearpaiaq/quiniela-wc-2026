@@ -141,6 +141,21 @@ body::before {
   animation: saved-flash-error 0.7s ease-out;
 }
 
+@keyframes today-bounce {
+  0%, 40%, 100% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+  20% {
+    transform: translateY(-25%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+}
+
+.today-bounce {
+  animation: today-bounce 2.5s infinite;
+}
+
 /* diagonal stripes for locked matches */
 .locked-stripes {
   background-image: repeating-linear-gradient(
