@@ -107,7 +107,7 @@ export function QuinielaClient({
   const [predictions, setPredictions] = useState<ScoreRecord>(initialPredictions);
   const [{ tab, group }, setNav] = useQueryStates(
     {
-      tab: parseAsStringLiteral(VALID_TABS).withDefault("r16"),
+      tab: parseAsStringLiteral(VALID_TABS).withDefault("qf"),
       group: parseAsStringLiteral(GROUP_LETTERS).withDefault("A"),
     },
     { shallow: true },
