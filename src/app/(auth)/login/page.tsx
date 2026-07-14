@@ -7,6 +7,11 @@ import { FormError, PasswordField, SubmitButton, TextField } from "@/components/
 
 const initialState: AuthFormState = { error: null };
 
+// International format without "+", spaces or dashes (e.g. 584121234567)
+const ADMIN_WHATSAPP = process.env.NEXT_PUBLIC_ADMIN_WHATSAPP;
+const RESET_MESSAGE =
+  "Hola, olvidé mi contraseña de la quiniela. ¿Me la puedes restablecer? Mi email es: ";
+
 export default function LoginPage() {
   const [state, formAction, pending] = useActionState(login, initialState);
 
@@ -37,6 +42,22 @@ export default function LoginPage() {
         <Link href="/registro" className="font-medium text-volt-400 hover:text-volt-300">
           Regístrate
         </Link>
+      </p>
+      <p className="mt-3 text-center text-xs text-ink-500">
+        ¿Olvidaste tu contraseña?{" "}
+        {ADMIN_WHATSAPP ? (
+          <a
+            href={`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(RESET_MESSAGE)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-volt-400 hover:text-volt-300"
+          >
+            Escríbele al admin
+          </a>
+        ) : (
+          "Contacta al admin"
+        )}{" "}
+        para restablecerla.
       </p>
     </section>
   );
