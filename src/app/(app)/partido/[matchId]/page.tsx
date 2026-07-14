@@ -84,7 +84,7 @@ async function PartidoContent({
           away: null,
         });
 
-  const rows = userRows
+  const rowsRaw = userRows
     .map((u) => {
       const prediction =
         u.homeScore !== null && u.awayScore !== null
@@ -106,6 +106,10 @@ async function PartidoContent({
         (b.points ?? 0) - (a.points ?? 0) ||
         a.displayName.localeCompare(b.displayName),
     );
+
+  // show the viewer's own predictions first (admins can view groups they don't belong to)
+  const own = rowsRaw.find((r) => r.userId === session.sub);
+  const rows = own ? [own, ...rowsRaw.filter((r) => r !== own)] : rowsRaw;
 
   return (
     <div className="space-y-5">
@@ -164,7 +168,7 @@ async function PartidoContent({
           rows.map((row) => (
             <div
               key={row.userId}
-              className={`space-y-1.5 rounded-lg border border-line bg-pitch-900 px-3 py-2.5 text-sm ${row.userId === session.sub ? "bg-volt-400/10" : ""}`}
+              className={`space-y-1.5 rounded-lg border border-line bg-pitch-900 px-3 py-2.5 text-sm ${row.userId === session.sub ? "sticky top-15 z-10 bg-linear-to-b from-volt-400/10 to-volt-400/10" : ""}`}
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
