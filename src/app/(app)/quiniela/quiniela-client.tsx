@@ -25,21 +25,6 @@ import {
 } from "@/lib/tournament";
 const VALID_TABS = ["group", "r32", "r16", "qf", "sf", "finals"] as const;
 
-function getActivePhase(now: Date): (typeof VALID_TABS)[number] {
-  let active: (typeof VALID_TABS)[number] = "group";
-  for (const tab of VALID_TABS) {
-    const firstKickoff = Math.min(
-      ...MATCHES.filter((m) =>
-        tab === "finals" ? m.phase === "final" || m.phase === "third" : m.phase === tab,
-      ).map((m) => Date.parse(m.kickoffAt)),
-    );
-    if (Number.isFinite(firstKickoff) && firstKickoff <= now.getTime()) {
-      active = tab;
-    }
-  }
-  return active;
-}
-
 function localDateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
@@ -59,28 +44,11 @@ function compareTodayFirst(todayKey: string | null) {
 import { isSameLocalDay } from "@/lib/format";
 import { savePrediction } from "@/lib/actions/predictions";
 import { MatchCard, type SaveStatus } from "@/components/match-card";
-import { useConfetti } from "@/components/confetti";
 import { TeamHistoryProvider } from "@/components/team-history";
 
 type PhaseKey = Phase | "finals";
 
 const GROUP_MATCH_IDS = MATCHES.filter((m) => m.phase === "group").map((m) => m.id);
-
-const PAN_MATCH_DAYS = new Set(
-  MATCHES
-    .filter((m) => m.phase === "group" && (m.home === "PAN" || m.away === "PAN"))
-    .map((m) => localDateKey(new Date(m.kickoffAt))),
-);
-
-const CONFETTI_SEEN_KEY = "quiniela-confetti-seen";
-
-function hasSeenConfettiToday(dateKey: string): boolean {
-  try {
-    return localStorage.getItem(CONFETTI_SEEN_KEY) === dateKey;
-  } catch {
-    return false;
-  }
-}
 
 function matchTag(match: (typeof MATCHES)[number]): React.ReactNode {
   if (match.phase === "third") return "3er puesto";
@@ -108,7 +76,7 @@ export function QuinielaClient({
   const [predictions, setPredictions] = useState<ScoreRecord>(initialPredictions);
   const [{ tab, group }, setNav] = useQueryStates(
     {
-      tab: parseAsStringLiteral(VALID_TABS).withDefault("sf"),
+      tab: parseAsStringLiteral(VALID_TABS).withDefault("finals"),
       group: parseAsStringLiteral(GROUP_LETTERS).withDefault("A"),
     },
     { shallow: true },
