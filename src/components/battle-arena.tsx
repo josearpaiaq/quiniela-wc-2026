@@ -16,6 +16,13 @@ const POLL_PREMATCH_MS = 15000;
 
 const formatTotal = (n: number) => n.toLocaleString("es");
 
+// Server counts only ever grow; taking the max shields the display from
+// stale CDN-cached polls arriving after a fresher flush response.
+const maxTotals = (prev: SideCounts, next: SideCounts): SideCounts => ({
+  home: Math.max(prev.home, next.home),
+  away: Math.max(prev.away, next.away),
+});
+
 interface BattleUser {
   userId: string;
   name: string;
@@ -44,6 +51,9 @@ export function BattleArena({
 }) {
   const [serverTotals, setServerTotals] = useState<SideCounts>(initialTotals);
   const [pending, setPending] = useState<SideCounts>({ home: 0, away: 0 });
+  // batch currently on the wire: kept in the displayed total so the count
+  // never dips while the flush round-trip is in progress
+  const [inFlightBatch, setInFlightBatch] = useState<SideCounts>({ home: 0, away: 0 });
   const [closed, setClosed] = useState(!open);
   // null = not fetched yet; loaded lazily when the disclosure opens
   const [users, setUsers] = useState<BattleUser[] | null>(null);
@@ -82,6 +92,7 @@ export function BattleArena({
         // clicker path: flush the batch — its response is our scoreboard update
         const { batch, rest } = takeFlushBatch(current);
         setPending(rest);
+        setInFlightBatch(batch);
         inFlightRef.current = true;
         try {
           const res = await fetch(`/api/battle/${matchId}`, {
@@ -92,7 +103,7 @@ export function BattleArena({
           if (!res.ok) throw new Error(String(res.status));
           const data: { accepted: boolean } & BattleState = await res.json();
           lastFlushAtRef.current = Date.now();
-          setServerTotals({ home: data.home, away: data.away });
+          setServerTotals((prev) => maxTotals(prev, data));
           setUsers(data.users);
           if (!data.accepted) {
             // rate-limited (another tab?) — clicks go back to the queue
@@ -102,6 +113,9 @@ export function BattleArena({
           // transient failure: clicks are never lost, retry next tick
           setPending((p) => ({ home: p.home + batch.home, away: p.away + batch.away }));
         } finally {
+          // batched with the updates above: by now the batch is either inside
+          // serverTotals or back in pending, so it's never displayed twice
+          setInFlightBatch({ home: 0, away: 0 });
           inFlightRef.current = false;
         }
         return;
@@ -117,7 +131,7 @@ export function BattleArena({
         const res = await fetch(`/api/battle/${matchId}`);
         if (res.ok) {
           const data: BattleState = await res.json();
-          setServerTotals({ home: data.home, away: data.away });
+          setServerTotals((prev) => maxTotals(prev, data));
           setUsers(data.users);
         }
       } catch {
@@ -136,8 +150,8 @@ export function BattleArena({
   if (!home || !away) return null;
 
   const totals = {
-    home: serverTotals.home + pending.home,
-    away: serverTotals.away + pending.away,
+    home: serverTotals.home + pending.home + inFlightBatch.home,
+    away: serverTotals.away + pending.away + inFlightBatch.away,
   };
   const total = totals.home + totals.away;
   const homePct = total === 0 ? 50 : (totals.home / total) * 100;
@@ -157,7 +171,7 @@ export function BattleArena({
       const res = await fetch(`/api/battle/${matchId}`);
       if (res.ok) {
         const data: BattleState = await res.json();
-        setServerTotals({ home: data.home, away: data.away });
+        setServerTotals((prev) => maxTotals(prev, data));
         setUsers(data.users);
       }
     } catch {
