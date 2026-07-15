@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Eye } from "lucide-react";
 import {
   addPendingClick,
   BATTLE_CLOSE_AFTER_KICKOFF_MS,
@@ -48,6 +48,8 @@ export function BattleArena({
   // null = not fetched yet; loaded lazily when the disclosure opens
   const [users, setUsers] = useState<BattleUser[] | null>(null);
   const [showUsers, setShowUsers] = useState(false);
+  // names currently peeking through the blur; the CSS animation ends the peek
+  const [revealedIds, setRevealedIds] = useState<Set<string>>(new Set());
 
   const kickoffMs = useMemo(() => new Date(kickoffAt).getTime(), [kickoffAt]);
   const closesAt = kickoffMs + BATTLE_CLOSE_AFTER_KICKOFF_MS;
@@ -163,6 +165,18 @@ export function BattleArena({
     }
   }
 
+  function revealName(userId: string) {
+    setRevealedIds((prev) => new Set(prev).add(userId));
+  }
+
+  function hideName(userId: string) {
+    setRevealedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(userId);
+      return next;
+    });
+  }
+
   // viewer's row first, fixed — same pattern as the predictions list
   const own = users?.find((u) => u.userId === viewerId);
   const userRows = users ? (own ? [own, ...users.filter((u) => u !== own)] : users) : null;
@@ -268,10 +282,28 @@ export function BattleArena({
                     key={u.userId}
                     className={`flex items-center justify-between gap-2 rounded-lg border border-line bg-pitch-900 px-3 py-2 text-sm ${isOwn ? "sticky top-15 z-10 bg-linear-to-b from-volt-400/10 to-volt-400/10" : ""}`}
                   >
-                    <span className="min-w-0 truncate">
-                      {u.name}
-                      {isOwn && (
-                        <span className="ml-2 text-[10px] uppercase text-volt-400">tú</span>
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <span
+                        className={
+                          isOwn
+                            ? "truncate"
+                            : `battle-name-blur truncate ${revealedIds.has(u.userId) ? "battle-name-peek" : ""}`
+                        }
+                        onAnimationEnd={() => hideName(u.userId)}
+                      >
+                        {u.name}
+                      </span>
+                      {isOwn ? (
+                        <span className="shrink-0 text-[10px] uppercase text-volt-400">tú</span>
+                      ) : (
+                        <button
+                          type="button"
+                          aria-label="Mostrar nombre por 2 segundos"
+                          onClick={() => revealName(u.userId)}
+                          className="shrink-0 cursor-pointer text-ink-500 transition hover:text-volt-400"
+                        >
+                          <Eye aria-hidden className="h-3.5 w-3.5" />
+                        </button>
                       )}
                     </span>
                     <span className="shrink-0 font-mono text-xs tabular-nums text-ink-300">
