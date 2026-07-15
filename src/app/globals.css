@@ -19,6 +19,10 @@
 
   --color-danger-400: #ff7a59;
 
+  /* battle bar pair: brand lime vs sky — CVD-validated against pitch-900 */
+  --color-battle-home: #c6f53f;
+  --color-battle-away: #58c4f6;
+
   --color-ink-100: #f2f7ee;
   --color-ink-300: #c2cfc0;
   --color-ink-500: #87977f;
@@ -46,6 +50,10 @@
 
     --color-gold-500: #0d4a8a;
     --color-gold-400: #1260a4;
+
+    /* battle bar pair: blue vs amber — volt/gold are near-identical blues here */
+    --color-battle-home: #1270a8;
+    --color-battle-away: #a86b0a;
   }
 }
 

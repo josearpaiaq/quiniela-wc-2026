@@ -1,5 +1,6 @@
 import {
   boolean,
+  integer,
   pgEnum,
   pgTable,
   primaryKey,
@@ -106,6 +107,25 @@ export const groups = pgTable("groups", {
     .references(() => users.id),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// per-match click battle: one row per user, aggregated with SUM for the scoreboard.
+// The row exists for rate limiting (lastFlushAt), not for display.
+export const battleClicks = pgTable(
+  "battle_clicks",
+  {
+    matchId: smallint("match_id")
+      .notNull()
+      .references(() => matches.id),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    // integer, not smallint: a dedicated fan can exceed 32k clicks in one match
+    homeClicks: integer("home_clicks").notNull().default(0),
+    awayClicks: integer("away_clicks").notNull().default(0),
+    lastFlushAt: timestamp("last_flush_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.matchId, table.userId] })],
+);
 
 export const groupMembers = pgTable(
   "group_members",
