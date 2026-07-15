@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Check, Lock } from "lucide-react";
+import { ArrowRight, Check, Lock, Swords } from "lucide-react";
 import { PenaltyBadge } from "./penalty-badge";
 import { ScoreStepper } from "./score-stepper";
 import { TeamLabel } from "./team-label";
@@ -37,6 +37,7 @@ export function MatchCard({
   result,
   matchPoints,
   detailsHref,
+  battleHref,
   isToday,
   onScore,
   onWinner,
@@ -58,6 +59,8 @@ export function MatchCard({
   matchPoints: number | null;
   /** when set (locked matches), links to the everyone's-predictions page */
   detailsHref?: string;
+  /** when set (open battle, pre-kickoff), links to the battle arena on the match page */
+  battleHref?: string;
   /** highlights the card when the match kicks off today */
   isToday?: boolean;
   onScore: (side: "home" | "away", value: number) => void;
@@ -173,6 +176,18 @@ export function MatchCard({
             })}
           </div>
         </div>
+      )}
+
+      {battleHref && (
+        <footer className="mt-2.5 flex items-center justify-center border-t border-line/60 pt-2 text-xs">
+          <Link
+            href={battleHref}
+            className="inline-flex items-center gap-1 whitespace-nowrap font-medium text-volt-400 underline-offset-2 hover:text-volt-300 hover:underline"
+          >
+            <Swords aria-hidden className="h-3.5 w-3.5" /> Battle abierto{" "}
+            <ArrowRight aria-hidden className="h-3.5 w-3.5" />
+          </Link>
+        </footer>
       )}
 
       {!open && (result || detailsHref) && (

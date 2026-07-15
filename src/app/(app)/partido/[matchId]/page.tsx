@@ -1,11 +1,13 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { BattleArena } from "@/components/battle-arena";
 import { GroupSelect } from "@/components/group-select";
 import { PenaltyBadge } from "@/components/penalty-badge";
 import { TeamLabel } from "@/components/team-label";
 import { requireUser } from "@/lib/auth/session";
+import { isBattleOpen } from "@/lib/battle/rules";
 import { getDb, schema } from "@/lib/db";
 import { getVisibleGroups } from "@/lib/groups";
 import { MATCHES } from "@/lib/db/seed-data";
@@ -35,7 +37,7 @@ async function PartidoContent({
   const selected = visibleGroups.find((g) => g.id === requested) ?? visibleGroups[0];
 
   const db = getDb();
-  const [[matchRow], userRows, resultRows, overrideRows] = await Promise.all([
+  const [[matchRow], userRows, resultRows, overrideRows, [battleRow]] = await Promise.all([
     db
       .select({ openOverride: schema.matches.openOverride })
       .from(schema.matches)
@@ -65,6 +67,13 @@ async function PartidoContent({
       : Promise.resolve([]),
     db.select().from(schema.results),
     db.select().from(schema.knockoutOverrides),
+    db
+      .select({
+        home: sql<number>`coalesce(sum(${schema.battleClicks.homeClicks}), 0)::int`,
+        away: sql<number>`coalesce(sum(${schema.battleClicks.awayClicks}), 0)::int`,
+      })
+      .from(schema.battleClicks)
+      .where(eq(schema.battleClicks.matchId, matchId)),
   ]);
 
   // Anti-copy: others' picks are revealed only once the match can't be edited.
@@ -111,6 +120,14 @@ async function PartidoContent({
   const own = rowsRaw.find((r) => r.userId === session.sub);
   const rows = own ? [own, ...rowsRaw.filter((r) => r !== own)] : rowsRaw;
 
+  const battleTotals = { home: battleRow?.home ?? 0, away: battleRow?.away ?? 0 };
+  const battleOpen = isBattleOpen({ kickoffAt: new Date(match.kickoffAt), slot });
+  // hidden until both teams are known; a finished battle stays visible, frozen
+  const showBattle =
+    slot.home !== null &&
+    slot.away !== null &&
+    (battleOpen || battleTotals.home + battleTotals.away > 0);
+
   return (
     <div className="space-y-5">
       <div>
@@ -142,6 +159,18 @@ async function PartidoContent({
           </div>
         </div>
       </div>
+
+      {showBattle && slot.home && slot.away && (
+        <BattleArena
+          matchId={matchId}
+          homeCode={slot.home}
+          awayCode={slot.away}
+          kickoffAt={match.kickoffAt}
+          open={battleOpen}
+          initialTotals={battleTotals}
+          viewerId={session.sub}
+        />
+      )}
 
       <section className="space-y-2">
         <h3 className="text-[11px] font-medium uppercase tracking-wider text-ink-500">

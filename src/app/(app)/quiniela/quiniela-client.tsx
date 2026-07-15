@@ -3,6 +3,7 @@
 import { Fragment, forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, Trophy } from "lucide-react";
 import { parseAsString, parseAsStringLiteral, useQueryState, useQueryStates } from "nuqs";
+import { isBattleOpen } from "@/lib/battle/rules";
 import { MATCHES, type GroupLetter, type Phase } from "@/lib/db/seed-data";
 import {
   PHASES,
@@ -226,6 +227,11 @@ export function QuinielaClient({
     const real = results[match.id];
     const teamsReady = match.phase === "group" || (slot?.home != null && slot?.away != null);
     const open = overrides.has(match.id) || (now < Date.parse(match.kickoffAt) && teamsReady);
+    // battle is votable as soon as the real matchup is known, before kickoff
+    const battleOpen = isBattleOpen(
+      { kickoffAt: new Date(match.kickoffAt), slot: { home: homeCode, away: awayCode } },
+      new Date(now),
+    );
     const isToday = mounted && isSameLocalDay(new Date(match.kickoffAt), new Date(now));
     return (
       <MatchCard
@@ -264,6 +270,7 @@ export function QuinielaClient({
             : null
         }
         detailsHref={open ? undefined : `/partido/${match.id}`}
+        battleHref={open && battleOpen ? `/partido/${match.id}` : undefined}
         onScore={(side, value) => setScore(match.id, match.phase, side, value)}
         onWinner={(side) => setWinner(match.id, match.phase, side)}
       />
