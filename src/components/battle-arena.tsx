@@ -158,7 +158,10 @@ export function BattleArena({
   const winner = totals.home === totals.away ? null : totals.home > totals.away ? "home" : "away";
 
   // no close check here: the tick closes the arena within one interval anyway
-  function handleClick(side: "home" | "away") {
+  function handleClick(e: React.MouseEvent, side: "home" | "away") {
+    // synthetic clicks (el.click() / dispatchEvent from a console script)
+    // arrive with isTrusted === false — only physical clicks count
+    if (!e.nativeEvent.isTrusted) return;
     setPending((p) => addPendingClick(p, side));
   }
 
@@ -243,7 +246,7 @@ export function BattleArena({
                   <button
                     type="button"
                     aria-label={`Dar un punto a ${team.name}`}
-                    onClick={() => handleClick(side)}
+                    onClick={(e) => handleClick(e, side)}
                     className="flex w-full cursor-pointer select-none flex-col items-center gap-1 rounded-xl border border-line bg-pitch-700/40 px-3 py-4 transition-transform duration-75 hover:border-volt-400/40 active:scale-90"
                   >
                     <span className="text-3xl leading-none">{team.flag}</span>
@@ -310,14 +313,16 @@ export function BattleArena({
                       {isOwn ? (
                         <span className="shrink-0 text-[10px] uppercase text-volt-400">tú</span>
                       ) : (
-                        <button
-                          type="button"
-                          aria-label="Mostrar nombre por 2 segundos"
-                          onClick={() => revealName(u.userId)}
-                          className="shrink-0 cursor-pointer text-ink-500 transition hover:text-volt-400"
-                        >
-                          <Eye aria-hidden className="h-3.5 w-3.5" />
-                        </button>
+                        !revealedIds.has(u.userId) && (
+                          <button
+                            type="button"
+                            aria-label="Mostrar nombre por 2 segundos"
+                            onClick={() => revealName(u.userId)}
+                            className="shrink-0 cursor-pointer text-ink-500 transition hover:text-volt-400"
+                          >
+                            <Eye aria-hidden className="h-3.5 w-3.5" />
+                          </button>
+                        )
                       )}
                     </span>
                     <span className="shrink-0 font-mono text-xs tabular-nums text-ink-300">
