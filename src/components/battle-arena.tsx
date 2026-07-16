@@ -158,7 +158,10 @@ export function BattleArena({
   const winner = totals.home === totals.away ? null : totals.home > totals.away ? "home" : "away";
 
   // no close check here: the tick closes the arena within one interval anyway
-  function handleClick(side: "home" | "away") {
+  function handleClick(e: React.MouseEvent, side: "home" | "away") {
+    // synthetic clicks (el.click() / dispatchEvent from a console script)
+    // arrive with isTrusted === false — only physical clicks count
+    if (!e.nativeEvent.isTrusted) return;
     setPending((p) => addPendingClick(p, side));
   }
 
@@ -243,7 +246,7 @@ export function BattleArena({
                   <button
                     type="button"
                     aria-label={`Dar un punto a ${team.name}`}
-                    onClick={() => handleClick(side)}
+                    onClick={(e) => handleClick(e, side)}
                     className="flex w-full cursor-pointer select-none flex-col items-center gap-1 rounded-xl border border-line bg-pitch-700/40 px-3 py-4 transition-transform duration-75 hover:border-volt-400/40 active:scale-90"
                   >
                     <span className="text-3xl leading-none">{team.flag}</span>
