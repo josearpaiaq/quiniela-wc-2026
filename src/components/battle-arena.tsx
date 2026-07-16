@@ -313,14 +313,16 @@ export function BattleArena({
                       {isOwn ? (
                         <span className="shrink-0 text-[10px] uppercase text-volt-400">tú</span>
                       ) : (
-                        <button
-                          type="button"
-                          aria-label="Mostrar nombre por 2 segundos"
-                          onClick={() => revealName(u.userId)}
-                          className="shrink-0 cursor-pointer text-ink-500 transition hover:text-volt-400"
-                        >
-                          <Eye aria-hidden className="h-3.5 w-3.5" />
-                        </button>
+                        !revealedIds.has(u.userId) && (
+                          <button
+                            type="button"
+                            aria-label="Mostrar nombre por 2 segundos"
+                            onClick={() => revealName(u.userId)}
+                            className="shrink-0 cursor-pointer text-ink-500 transition hover:text-volt-400"
+                          >
+                            <Eye aria-hidden className="h-3.5 w-3.5" />
+                          </button>
+                        )
                       )}
                     </span>
                     <span className="shrink-0 font-mono text-xs tabular-nums text-ink-300">
