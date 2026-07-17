@@ -14,7 +14,14 @@ import { MATCHES } from "@/lib/db/seed-data";
 import { formatKickoff, shortVenue } from "@/lib/format";
 import { isPredictionVisibleToOthers } from "@/lib/rules";
 import { overrideRowsToMap, rowsToScoreMap } from "@/lib/score-rows";
-import { buildBracket, groupMatchPoints, knockoutMatchPoints } from "@/lib/tournament";
+import {
+  buildBracket,
+  groupMatchPoints,
+  knockoutMatchPoints,
+  thirdPlaceMatchPoints,
+  ROUND_VALUES,
+} from "@/lib/tournament";
+import { KNOCKOUT_EXACT_POINTS } from "@/lib/tournament/scoring";
 
 async function PartidoContent({
   params,
@@ -103,7 +110,9 @@ async function PartidoContent({
       if (prediction && real !== undefined) {
         if (match.phase === "group") {
           points = groupMatchPoints(prediction, real);
-        } else if (match.phase !== "third") {
+        } else if (match.phase === "third") {
+          points = thirdPlaceMatchPoints(prediction, real);
+        } else {
           points = knockoutMatchPoints(match.phase, prediction, real);
         }
       }
@@ -157,6 +166,12 @@ async function PartidoContent({
             </div>
             <TeamLabel code={slot.away} align="right" />
           </div>
+          {match.phase === "third" && (
+            <p className="mt-2 text-center text-[10px] text-gold-400">
+              Puntúa como una semifinal: acertar al ganador +{ROUND_VALUES.final} pts · marcador
+              exacto +{KNOCKOUT_EXACT_POINTS} pts
+            </p>
+          )}
         </div>
       </div>
 

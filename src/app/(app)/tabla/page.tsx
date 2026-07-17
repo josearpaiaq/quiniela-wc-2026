@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
 import { getVisibleGroups } from "@/lib/groups";
 import { overrideRowsToMap, rowsToScoreMap } from "@/lib/score-rows";
-import { GROUP_EXACT_POINTS, scoreUser, type Score } from "@/lib/tournament";
+import { scoreUser, type Score } from "@/lib/tournament";
 import { JoinGroupForm } from "./join-group-form";
 
 async function TablaContent({
@@ -82,11 +82,13 @@ async function TablaContent({
 
   const standings = users
     .map((user) => {
-      const score = scoreUser(byUser.get(user.id) ?? new Map(), results, overrides);
-      const exactos =
-        [...score.groupPointsByMatch.values()].filter((v) => v === GROUP_EXACT_POINTS).length +
-        [...score.knockoutExactByMatch.values()].filter((v) => v > 0).length;
-      return { user, score, filled: byUser.get(user.id)?.size ?? 0, exactos };
+      const predictions = byUser.get(user.id) ?? new Map<number, Score>();
+      const score = scoreUser(predictions, results, overrides);
+      const exactos = [...predictions].filter(([id, p]) => {
+        const real = results.get(id);
+        return real !== undefined && p.home === real.home && p.away === real.away;
+      }).length;
+      return { user, score, filled: predictions.size, exactos };
     })
     .sort(
       (a, b) =>

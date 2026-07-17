@@ -55,6 +55,18 @@ export function groupMatchPoints(
   return 0;
 }
 
+/**
+ * Points for the third-place match: scored like a semifinal — the correct
+ * winner (incl. penalties) pays as much as a semifinal winner pick, plus the
+ * standard knockout exact-score bonus.
+ */
+export function thirdPlaceMatchPoints(
+  predicted: { home: number; away: number; winnerSide?: Side | null },
+  real: { home: number; away: number; winnerSide?: Side | null },
+): number {
+  return knockoutMatchPoints("sf", predicted, real);
+}
+
 function teamsInRound(bracket: BracketTeams, matchIds: number[]): Set<string> {
   const teams = new Set<string>();
   for (const id of matchIds) {
@@ -68,8 +80,9 @@ function teamsInRound(bracket: BracketTeams, matchIds: number[]): Set<string> {
 /**
  * Full scoring of one user against reality (spec §2):
  * - group matches: exact score 3, correct outcome 1
+ * - third-place match: scored like a semifinal (winner 6, exact score +3)
  * - knockout: advancement points per team correctly placed in each real round
- *   (presence, not slot); the third-place match never scores
+ *   (presence, not slot); the third-place match never scores advancement
  */
 export function scoreUser(
   predictions: ScoreMap,
@@ -91,7 +104,7 @@ export function scoreUser(
     const predicted = predictions.get(THIRD_PLACE_MATCH.id);
     const real = results.get(THIRD_PLACE_MATCH.id);
     if (predicted && real) {
-      const pts = groupMatchPoints(predicted, real);
+      const pts = thirdPlaceMatchPoints(predicted, real);
       groupPointsByMatch.set(THIRD_PLACE_MATCH.id, pts);
       groupPoints += pts;
     }

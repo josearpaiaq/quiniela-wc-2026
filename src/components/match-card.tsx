@@ -9,6 +9,7 @@ import { TEAM_BY_CODE, type ScoreDTO } from "@/lib/dto";
 import { formatKickoff, shortVenue } from "@/lib/format";
 import type { Phase } from "@/lib/db/seed-data";
 import { FINAL_EXACT_POINTS, KNOCKOUT_EXACT_POINTS } from "@/lib/tournament/scoring";
+import { ROUND_VALUES } from "@/lib/tournament/types";
 
 export type SaveStatus = "saving" | "saved" | "error" | "pendingWinner" | null;
 
@@ -145,6 +146,13 @@ export function MatchCard({
         <p className="mt-2 text-center text-[10px] text-gold-400">
           El marcador exacto de la final vale +{FINAL_EXACT_POINTS} pts (en vez de +
           {KNOCKOUT_EXACT_POINTS})
+        </p>
+      )}
+
+      {phase === "third" && (
+        <p className="mt-2 text-center text-[10px] text-gold-400">
+          Puntúa como una semifinal: acertar al ganador +{ROUND_VALUES.final} pts · marcador
+          exacto +{KNOCKOUT_EXACT_POINTS} pts
         </p>
       )}
 

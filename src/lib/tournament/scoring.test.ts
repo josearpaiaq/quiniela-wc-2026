@@ -5,6 +5,7 @@ import {
   groupMatchPoints,
   knockoutMatchPoints,
   scoreUser,
+  thirdPlaceMatchPoints,
 } from "./scoring";
 import type { Score } from "./types";
 
@@ -56,6 +57,42 @@ describe("scoreUser — group stage", () => {
     const onlyResult = scoreUser(new Map(), new Map([[1, { home: 1, away: 0 }]]));
     expect(onlyResult.total).toBe(0);
   });
+
+  it("scores the third-place match like a semifinal, crediting pens winners", () => {
+    const thirdId = MATCHES.find((m) => m.phase === "third")!.id;
+    const score = scoreUser(
+      new Map<number, Score>([[thirdId, { home: 1, away: 1, winnerSide: "home" }]]),
+      new Map<number, Score>([[thirdId, { home: 2, away: 0 }]]),
+    );
+    expect(score.groupPointsByMatch.get(thirdId)).toBe(6);
+    expect(score.groupPoints).toBe(6);
+  });
+});
+
+describe("thirdPlaceMatchPoints", () => {
+  it("scores like a semifinal: correct winner 6, exact score adds 3", () => {
+    expect(thirdPlaceMatchPoints({ home: 2, away: 1 }, { home: 2, away: 1 })).toBe(9);
+    expect(thirdPlaceMatchPoints({ home: 2, away: 0 }, { home: 1, away: 0 })).toBe(6);
+    expect(thirdPlaceMatchPoints({ home: 0, away: 2 }, { home: 1, away: 0 })).toBe(0);
+  });
+
+  it("credits the winner across penalties", () => {
+    // predicted a draw with home winning on pens; home won in regulation
+    expect(
+      thirdPlaceMatchPoints({ home: 1, away: 1, winnerSide: "home" }, { home: 2, away: 1 }),
+    ).toBe(6);
+    // predicted a home win; the real match was a draw home won on pens
+    expect(
+      thirdPlaceMatchPoints({ home: 2, away: 1 }, { home: 1, away: 1, winnerSide: "home" }),
+    ).toBe(6);
+    // right draw score but wrong pens winner: only the exact-score bonus
+    expect(
+      thirdPlaceMatchPoints(
+        { home: 1, away: 1, winnerSide: "home" },
+        { home: 1, away: 1, winnerSide: "away" },
+      ),
+    ).toBe(3);
+  });
 });
 
 describe("knockoutMatchPoints", () => {
@@ -91,17 +128,17 @@ describe("knockoutMatchPoints", () => {
 });
 
 describe("scoreUser — advancement", () => {
-  it("a perfect prediction earns the theoretical maximum of 443", () => {
+  it("a perfect prediction earns the theoretical maximum of 539", () => {
     const tournament = fullTournament();
     const score = scoreUser(tournament, tournament);
-    // 72 group matches + 1 third-place match, all exact
-    expect(score.groupPoints).toBe(72 * 3 + 3);
+    // 72 group matches exact + third place like a semifinal (winner 6 + exact 3)
+    expect(score.groupPoints).toBe(72 * 3 + 9);
     // 32×1 + 16×2 + 8×3 + 4×4 + 2×6 + champion 8 = 124
     expect(score.advancePoints).toBe(124);
     // every knockout match exact except the final, which pays 10 instead of 3
     const knockoutExactMax = (ALL_KNOCKOUT_SCORED_MATCH_IDS.length - 1) * 3 + 10;
     expect(score.knockoutExactPoints).toBe(knockoutExactMax);
-    expect(score.total).toBe(343 + knockoutExactMax);
+    expect(score.total).toBe(349 + knockoutExactMax);
     expect(score.advanceByRound.get("champion")!.points).toBe(8);
   });
 

@@ -19,5 +19,6 @@ export {
   groupMatchPoints,
   knockoutMatchPoints,
   scoreUser,
+  thirdPlaceMatchPoints,
 } from "./scoring";
 export { buildTeamHistories, type TeamHistoryEntry } from "./team-history";
