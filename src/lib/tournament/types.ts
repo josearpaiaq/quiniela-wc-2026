@@ -61,7 +61,7 @@ export interface UserScore {
   groupPoints: number;
   advancePoints: number;
   knockoutExactPoints: number;
-  /** +1 per finished match where the user's predicted winner also won the click battle. */
+  /** +1 per match where the user's predicted winner won both the match and its click battle. */
   battlePoints: number;
   /**
    * matchId -> points for matches with both prediction and result:

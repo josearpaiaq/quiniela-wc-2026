@@ -70,27 +70,30 @@ describe("scoreUser — group stage", () => {
 });
 
 describe("scoreUser — battle", () => {
-  it("adds a point when the predicted winner also won the battle", () => {
+  it("pays only when prediction, real winner and battle winner all match", () => {
     const predictions = new Map<number, Score>([
       [1, { home: 2, away: 0 }], // predicted home
       [2, { home: 0, away: 1 }], // predicted away
-      [3, { home: 1, away: 1 }], // predicted a draw: can't match a battle winner
+      [3, { home: 2, away: 1 }], // predicted home
+      [4, { home: 1, away: 1 }], // predicted a draw: can't match a battle winner
     ]);
     const results = new Map<number, Score>([
-      [1, { home: 1, away: 0 }],
-      [2, { home: 2, away: 0 }],
-      [3, { home: 0, away: 0 }],
+      [1, { home: 1, away: 0 }], // home won
+      [2, { home: 0, away: 2 }], // away won
+      [3, { home: 0, away: 1 }], // away won: the prediction missed
+      [4, { home: 0, away: 0 }],
     ]);
     const battleWinners = new Map<number, Side>([
-      [1, "home"], // matches the prediction: +1
-      [2, "home"], // user predicted away: no point
-      [3, "home"], // user predicted a draw: no point
+      [1, "home"], // predicted ✓ real ✓ battle ✓ → +1
+      [2, "home"], // right prediction but the battle went the other way → no point
+      [3, "home"], // battle matches the prediction but the real winner differs → no point
+      [4, "home"], // drew the match and predicted a draw → no point
     ]);
     const score = scoreUser(predictions, results, undefined, battleWinners);
     expect(score.battlePoints).toBe(1);
   });
 
-  it("credits a pens-winner prediction whose team also won the battle", () => {
+  it("credits a pens-winner prediction whose team won match and battle", () => {
     const thirdId = MATCHES.find((m) => m.phase === "third")!.id;
     const score = scoreUser(
       new Map<number, Score>([[thirdId, { home: 1, away: 1, winnerSide: "home" }]]),

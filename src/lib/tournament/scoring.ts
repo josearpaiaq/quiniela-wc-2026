@@ -15,7 +15,7 @@ export const GROUP_OUTCOME_POINTS = 1;
 export const KNOCKOUT_EXACT_POINTS = 3;
 /** The final's exact-score bonus is boosted vs. the other knockout rounds. */
 export const FINAL_EXACT_POINTS = 10;
-/** Extra point when the user's predicted winner also wins the match's click battle. */
+/** Extra point when the predicted winner wins both the match and its click battle. */
 export const BATTLE_WIN_POINTS = 1;
 
 const GROUP_MATCHES = MATCHES.filter((m) => m.phase === "group");
@@ -85,8 +85,8 @@ function teamsInRound(bracket: BracketTeams, matchIds: number[]): Set<string> {
  * - third-place match: scored like a semifinal (winner 6, exact score +3)
  * - knockout: advancement points per team correctly placed in each real round
  *   (presence, not slot); the third-place match never scores advancement
- * - battle: +1 per finished match where the user's predicted winner (incl.
- *   penalties) is also the side that won the click battle
+ * - battle: +1 per match where the user's predicted winner (incl. penalties)
+ *   won both the real match and its click battle
  */
 export function scoreUser(
   predictions: ScoreMap,
@@ -193,12 +193,14 @@ export function scoreUser(
     knockoutExactPoints += pts;
   }
 
-  // Gated on the official result so battle points settle with everything else,
-  // never while a battle can still flip.
+  // Triple match required: battle winner, predicted winner and real winner
+  // must be the same side. Gated on the official result so battle points
+  // settle with everything else, never while a battle can still flip.
   let battlePoints = 0;
   if (battleWinners) {
     for (const [matchId, winner] of battleWinners) {
-      if (!results.has(matchId)) continue;
+      const real = results.get(matchId);
+      if (!real || pickSide(real) !== winner) continue;
       const predicted = predictions.get(matchId);
       if (predicted && pickSide(predicted) === winner) battlePoints += BATTLE_WIN_POINTS;
     }
