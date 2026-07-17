@@ -144,9 +144,10 @@ export default function ReglasPage() {
         </h3>
         <p className="text-sm text-ink-400">
           En cada partido, gana la batalla el equipo con{" "}
-          <strong className="text-ink-200">más clicks totales</strong> de toda la comunidad. Si tu
-          pronóstico dice que gana un equipo — aunque sea en penales — y ese mismo equipo gana la
-          batalla, sumas {BATTLE_WIN_POINTS} pt extra cuando se carga el resultado oficial.
+          <strong className="text-ink-200">más clicks totales</strong> de toda la comunidad. Si
+          pronosticaste al ganador del partido — aunque sea en penales — y ese mismo equipo
+          también gana la batalla, sumas {BATTLE_WIN_POINTS} pt extra cuando se carga el
+          resultado oficial.
         </p>
         <p className="px-1 text-[11px] text-ink-500">
           Una batalla empatada en clicks no tiene ganador, y un pronóstico de empate (grupos) no
