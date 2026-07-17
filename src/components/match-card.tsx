@@ -9,6 +9,7 @@ import { TEAM_BY_CODE, type ScoreDTO } from "@/lib/dto";
 import { formatKickoff, shortVenue } from "@/lib/format";
 import type { Phase } from "@/lib/db/seed-data";
 import { FINAL_EXACT_POINTS, KNOCKOUT_EXACT_POINTS } from "@/lib/tournament/scoring";
+import { ROUND_VALUES } from "@/lib/tournament/types";
 
 export type SaveStatus = "saving" | "saved" | "error" | "pendingWinner" | null;
 
@@ -148,6 +149,13 @@ export function MatchCard({
         </p>
       )}
 
+      {phase === "third" && (
+        <p className="mt-2 text-center text-[10px] text-gold-400">
+          Puntúa como una semifinal: acertar al ganador +{ROUND_VALUES.final} pts · marcador
+          exacto +{KNOCKOUT_EXACT_POINTS} pts
+        </p>
+      )}
+
       {needsWinner && homeCode && awayCode && (
         <div className="mt-3 rounded-lg border border-gold-400/30 bg-gold-400/5 p-2.5">
           <p className="mb-2 text-center text-[11px] font-medium uppercase tracking-wider text-gold-400">
@@ -184,7 +192,7 @@ export function MatchCard({
             href={battleHref}
             className="inline-flex items-center gap-1 whitespace-nowrap font-medium text-volt-400 underline-offset-2 hover:text-volt-300 hover:underline"
           >
-            <Swords aria-hidden className="h-3.5 w-3.5" /> Battle abierto{" "}
+            <Swords aria-hidden className="h-3.5 w-3.5" /> Batalla abierta{" "}
             <ArrowRight aria-hidden className="h-3.5 w-3.5" />
           </Link>
         </footer>

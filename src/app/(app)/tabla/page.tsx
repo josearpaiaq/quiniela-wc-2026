@@ -5,8 +5,8 @@ import { GroupSelect } from "@/components/group-select";
 import { requireUser } from "@/lib/auth/session";
 import { getDb, schema } from "@/lib/db";
 import { getVisibleGroups } from "@/lib/groups";
-import { overrideRowsToMap, rowsToScoreMap } from "@/lib/score-rows";
-import { GROUP_EXACT_POINTS, scoreUser, type Score } from "@/lib/tournament";
+import { battleRowsToWinners, overrideRowsToMap, rowsToScoreMap } from "@/lib/score-rows";
+import { scoreUser, type Score } from "@/lib/tournament";
 import { JoinGroupForm } from "./join-group-form";
 
 async function TablaContent({
@@ -56,7 +56,7 @@ async function TablaContent({
   const users = memberRows.map((row) => row.user);
   const memberIds = users.map((user) => user.id);
 
-  const [predictionRows, resultRows, overrideRows] = await Promise.all([
+  const [predictionRows, resultRows, overrideRows, battleRows] = await Promise.all([
     memberIds.length > 0
       ? db
           .select()
@@ -65,10 +65,13 @@ async function TablaContent({
       : Promise.resolve([]),
     db.select().from(schema.results),
     db.select().from(schema.knockoutOverrides),
+    // every user's clicks, not just this group's: the battle is app-wide
+    db.select().from(schema.battleClicks),
   ]);
 
   const results = rowsToScoreMap(resultRows);
   const overrides = overrideRowsToMap(overrideRows);
+  const battleWinners = battleRowsToWinners(battleRows);
 
   const byUser = new Map<string, Map<number, Score>>();
   for (const row of predictionRows) {
@@ -82,11 +85,13 @@ async function TablaContent({
 
   const standings = users
     .map((user) => {
-      const score = scoreUser(byUser.get(user.id) ?? new Map(), results, overrides);
-      const exactos =
-        [...score.groupPointsByMatch.values()].filter((v) => v === GROUP_EXACT_POINTS).length +
-        [...score.knockoutExactByMatch.values()].filter((v) => v > 0).length;
-      return { user, score, filled: byUser.get(user.id)?.size ?? 0, exactos };
+      const predictions = byUser.get(user.id) ?? new Map<number, Score>();
+      const score = scoreUser(predictions, results, overrides, battleWinners);
+      const exactos = [...predictions].filter(([id, p]) => {
+        const real = results.get(id);
+        return real !== undefined && p.home === real.home && p.away === real.away;
+      }).length;
+      return { user, score, filled: predictions.size, exactos };
     })
     .sort(
       (a, b) =>
@@ -145,7 +150,8 @@ async function TablaContent({
                 </span>
                 <span className="text-right">
                   <span className="block font-mono text-[11px] text-ink-500">
-                    G {score.groupPoints} · Av {score.advancePoints} · ✓{exactos}
+                    G {score.groupPoints} · Av {score.advancePoints} · B {score.battlePoints} ·
+                    ✓{exactos}
                   </span>
                   <span className="block font-mono text-xl font-bold text-volt-400">
                     {score.total}

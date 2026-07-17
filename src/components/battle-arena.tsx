@@ -9,6 +9,7 @@ import {
   type SideCounts,
 } from "@/lib/battle/rules";
 import { TEAM_BY_CODE } from "@/lib/dto";
+import { BATTLE_WIN_POINTS } from "@/lib/tournament/scoring";
 
 const FLUSH_TICK_MS = 3000;
 const POLL_LIVE_MS = 3000;
@@ -201,10 +202,10 @@ export function BattleArena({
   return (
     <section className="space-y-2">
       <div className="flex items-center justify-between">
-        <h3 className="text-[11px] font-medium uppercase tracking-wider text-ink-500">Battle</h3>
+        <h3 className="text-[11px] font-medium uppercase tracking-wider text-ink-500">Batalla</h3>
         {closed ? (
           <span className="rounded-full bg-pitch-700 px-2 py-0.5 text-[10px] font-semibold uppercase text-ink-500">
-            Battle terminado
+            Batalla terminada
           </span>
         ) : (
           <span className="flex items-center gap-1.5 text-[10px] uppercase text-volt-400">
@@ -271,6 +272,11 @@ export function BattleArena({
             style={{ width: `${100 - homePct}%` }}
           />
         </div>
+
+        <p className="mt-3 text-center text-[10px] text-ink-500">
+          Si tu pronóstico acierta al ganador del partido y ese mismo equipo gana la batalla,
+          sumas +{BATTLE_WIN_POINTS} pt extra
+        </p>
 
         <button
           type="button"

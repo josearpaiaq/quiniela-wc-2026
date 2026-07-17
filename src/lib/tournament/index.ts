@@ -14,10 +14,12 @@ export {
   winnerOf,
 } from "./bracket";
 export {
+  BATTLE_WIN_POINTS,
   GROUP_EXACT_POINTS,
   GROUP_OUTCOME_POINTS,
   groupMatchPoints,
   knockoutMatchPoints,
   scoreUser,
+  thirdPlaceMatchPoints,
 } from "./scoring";
 export { buildTeamHistories, type TeamHistoryEntry } from "./team-history";

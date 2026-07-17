@@ -91,7 +91,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/battle/[mat
   // Re-checked server-side so nobody votes an undefined future match via curl.
   const slot = await resolveSlot(db, match);
   if (!isBattleOpen({ kickoffAt: new Date(match.kickoffAt), slot })) {
-    return Response.json({ error: "El battle está cerrado" }, { status: 409 });
+    return Response.json({ error: "La batalla está cerrada" }, { status: 409 });
   }
 
   // Increment and rate limit in one atomic statement: concurrent flushes from

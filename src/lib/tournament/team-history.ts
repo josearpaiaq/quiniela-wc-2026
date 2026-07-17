@@ -1,6 +1,6 @@
 import { MATCHES, type Phase } from "../db/seed-data";
 import { buildBracket, KNOCKOUT_MATCHES } from "./bracket";
-import { groupMatchPoints, knockoutMatchPoints } from "./scoring";
+import { groupMatchPoints, knockoutMatchPoints, thirdPlaceMatchPoints } from "./scoring";
 import type { BracketOverrides, ScoreMap, Side } from "./types";
 
 const GROUP_MATCHES = MATCHES.filter((m) => m.phase === "group");
@@ -22,12 +22,12 @@ export interface TeamHistoryEntry {
 
 function matchPoints(
   phase: Phase,
-  predicted: { home: number; away: number },
-  real: { home: number; away: number },
+  predicted: { home: number; away: number; winnerSide?: Side | null },
+  real: { home: number; away: number; winnerSide?: Side | null },
 ): number {
-  return phase === "r32" || phase === "r16" || phase === "qf" || phase === "sf" || phase === "final"
-    ? knockoutMatchPoints(phase, predicted, real)
-    : groupMatchPoints(predicted, real);
+  if (phase === "group") return groupMatchPoints(predicted, real);
+  if (phase === "third") return thirdPlaceMatchPoints(predicted, real);
+  return knockoutMatchPoints(phase, predicted, real);
 }
 
 /**

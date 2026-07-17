@@ -20,6 +20,7 @@ import {
   computeGroupStandings,
   groupMatchPoints,
   knockoutMatchPoints,
+  thirdPlaceMatchPoints,
   rankThirds,
   type ThirdRow,
 } from "@/lib/tournament";
@@ -233,7 +234,7 @@ export function QuinielaClient({
             ? match.phase === "group"
               ? groupMatchPoints(prediction, real)
               : match.phase === "third"
-                ? null
+                ? thirdPlaceMatchPoints(prediction, real)
                 : knockoutMatchPoints(match.phase, prediction, real)
             : null
         }
