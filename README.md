@@ -46,6 +46,7 @@ Variables de entorno:
 - **Tercer puesto** (1 partido): puntúa como una semifinal — acertar al ganador (contando penales) **6 pts** · marcador exacto **+3 pts** adicionales
 - **Eliminatorias** (por equipo que avanza a cada ronda real): 32avos **1** · 16avos **2** · cuartos **3** · semis **4** · final **6** · campeón **8**
 - **Bonus exacto en eliminatorias**: +**3 pts** adicionales si aciertas el marcador exacto de un partido de fase eliminatoria (r32, r16, cuartos, semis) · en la **final** este bonus es de +**10 pts** en vez de +3
+- **Batalla** (por partido): si tu pronóstico dice que gana un equipo (aunque sea en penales) y ese mismo equipo gana la batalla de clicks — más clicks totales de toda la comunidad — sumas **1 pt** extra
 - Pronósticos editables hasta el kickoff de cada partido (el admin puede desbloquear casos puntuales)
 - Los pronósticos ajenos solo se ven cuando el partido ya está bloqueado
 

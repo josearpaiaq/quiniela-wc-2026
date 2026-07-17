@@ -63,3 +63,10 @@ export function addPendingClick(pending: SideCounts, side: "home" | "away"): Sid
   if (pending.home + pending.away >= MAX_PENDING_CLICKS) return pending;
   return { ...pending, [side]: pending[side] + 1 };
 }
+
+/** Winner of a battle: the side with strictly more total clicks, or null on a tie. */
+export function battleWinnerOf(counts: SideCounts): "home" | "away" | null {
+  if (counts.home > counts.away) return "home";
+  if (counts.away > counts.home) return "away";
+  return null;
+}

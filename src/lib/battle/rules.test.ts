@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   addPendingClick,
   battleFlushSchema,
+  battleWinnerOf,
   isBattleOpen,
   MAX_CLICKS_PER_FLUSH,
   MAX_PENDING_CLICKS,
@@ -58,6 +59,18 @@ describe("takeFlushBatch", () => {
     expect(batch.home + batch.away).toBe(MAX_CLICKS_PER_FLUSH);
     expect(batch.home + rest.home).toBe(20);
     expect(batch.away + rest.away).toBe(10);
+  });
+});
+
+describe("battleWinnerOf", () => {
+  it("the side with strictly more total clicks wins", () => {
+    expect(battleWinnerOf({ home: 10, away: 3 })).toBe("home");
+    expect(battleWinnerOf({ home: 2, away: 9 })).toBe("away");
+  });
+
+  it("returns null on a tie", () => {
+    expect(battleWinnerOf({ home: 5, away: 5 })).toBe(null);
+    expect(battleWinnerOf({ home: 0, away: 0 })).toBe(null);
   });
 });
 

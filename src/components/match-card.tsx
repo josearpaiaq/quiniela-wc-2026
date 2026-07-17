@@ -192,7 +192,7 @@ export function MatchCard({
             href={battleHref}
             className="inline-flex items-center gap-1 whitespace-nowrap font-medium text-volt-400 underline-offset-2 hover:text-volt-300 hover:underline"
           >
-            <Swords aria-hidden className="h-3.5 w-3.5" /> Battle abierto{" "}
+            <Swords aria-hidden className="h-3.5 w-3.5" /> Batalla abierta{" "}
             <ArrowRight aria-hidden className="h-3.5 w-3.5" />
           </Link>
         </footer>

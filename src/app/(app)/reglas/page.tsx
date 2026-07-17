@@ -1,5 +1,6 @@
 import {
   ALL_KNOCKOUT_SCORED_MATCH_IDS,
+  BATTLE_WIN_POINTS,
   FINAL_EXACT_POINTS,
   GROUP_EXACT_POINTS,
   GROUP_OUTCOME_POINTS,
@@ -136,6 +137,23 @@ export default function ReglasPage() {
         </p>
       </section>
 
+      {/* Battle */}
+      <section className="space-y-3">
+        <h3 className="text-xs font-semibold uppercase tracking-widest text-ink-500">
+          Batalla · punto extra
+        </h3>
+        <p className="text-sm text-ink-400">
+          En cada partido, gana la batalla el equipo con{" "}
+          <strong className="text-ink-200">más clicks totales</strong> de toda la comunidad. Si tu
+          pronóstico dice que gana un equipo — aunque sea en penales — y ese mismo equipo gana la
+          batalla, sumas {BATTLE_WIN_POINTS} pt extra cuando se carga el resultado oficial.
+        </p>
+        <p className="px-1 text-[11px] text-ink-500">
+          Una batalla empatada en clicks no tiene ganador, y un pronóstico de empate (grupos) no
+          puede ganar el punto de batalla.
+        </p>
+      </section>
+
       {/* Max points */}
       <section className="rounded-xl border border-volt-400/30 bg-volt-400/5 px-4 py-4">
         <p className="text-xs font-semibold uppercase tracking-widest text-volt-400">
@@ -159,7 +177,8 @@ export default function ReglasPage() {
           Si acertaras el marcador exacto de los 72 partidos de grupos, el ganador y marcador
           exacto del tercer puesto, todos los avances de eliminación y el marcador exacto de los{" "}
           {ALL_KNOCKOUT_SCORED_MATCH_IDS.length} partidos de eliminación directa (la final vale{" "}
-          {FINAL_EXACT_POINTS} pts en vez de {KNOCKOUT_EXACT_POINTS}).
+          {FINAL_EXACT_POINTS} pts en vez de {KNOCKOUT_EXACT_POINTS}). La batalla puede sumar
+          hasta {104 * BATTLE_WIN_POINTS} pts extra por encima de esto.
         </p>
       </section>
     </div>

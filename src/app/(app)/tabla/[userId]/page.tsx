@@ -7,7 +7,7 @@ import { getDb, schema } from "@/lib/db";
 import { MATCHES, type GroupLetter, type Phase } from "@/lib/db/seed-data";
 import { TEAM_BY_CODE } from "@/lib/dto";
 import { isMatchOpen } from "@/lib/rules";
-import { overrideRowsToMap, rowsToScoreMap } from "@/lib/score-rows";
+import { battleRowsToWinners, overrideRowsToMap, rowsToScoreMap } from "@/lib/score-rows";
 import {
   buildBracket,
   computeGroupStandings,
@@ -62,7 +62,7 @@ export default async function QuinielaAjenaPage({
     if (!theirs.some((row) => myGroups.has(row.groupId))) notFound();
   }
 
-  const [predictionRows, resultRows, overrideRows, openRows] = await Promise.all([
+  const [predictionRows, resultRows, overrideRows, openRows, battleRows] = await Promise.all([
     db.select().from(schema.predictions).where(eq(schema.predictions.userId, userId)),
     db.select().from(schema.results),
     db.select().from(schema.knockoutOverrides),
@@ -70,13 +70,15 @@ export default async function QuinielaAjenaPage({
       .select({ id: schema.matches.id })
       .from(schema.matches)
       .where(eq(schema.matches.openOverride, true)),
+    // every user's clicks: the battle winner is decided app-wide
+    db.select().from(schema.battleClicks),
   ]);
 
   const predictions = rowsToScoreMap(predictionRows);
   const results = rowsToScoreMap(resultRows);
   const overrides = overrideRowsToMap(overrideRows);
   const openOverrideIds = new Set(openRows.map((r) => r.id));
-  const score = scoreUser(predictions, results, overrides);
+  const score = scoreUser(predictions, results, overrides, battleRowsToWinners(battleRows));
   const realBracket = buildBracket(results, overrides);
 
   // Real final positions for each team (used to sort advance-hit flags).
@@ -183,7 +185,7 @@ export default async function QuinielaAjenaPage({
             <p className="font-mono text-[10px] text-ink-500">puntos totales</p>
           </div>
         </div>
-        <div className="mt-3 grid grid-cols-3 gap-1.5 sm:grid-cols-6">
+        <div className="mt-3 grid grid-cols-4 gap-1.5 sm:grid-cols-7">
           {PHASE_BREAKDOWN.map(({ phase, label }) => {
             const pts = phasePoints.get(phase) ?? 0;
             return (
@@ -198,6 +200,16 @@ export default async function QuinielaAjenaPage({
               </div>
             );
           })}
+          <div className="rounded-lg border border-line bg-pitch-900 px-2 py-1.5 text-center">
+            <p
+              className={`font-mono text-lg font-bold ${
+                score.battlePoints > 0 ? "text-volt-400" : "text-ink-600"
+              }`}
+            >
+              {score.battlePoints}
+            </p>
+            <p className="text-[10px] text-ink-500">Batalla</p>
+          </div>
         </div>
       </div>
 

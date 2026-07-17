@@ -7,7 +7,7 @@ import {
   scoreUser,
   thirdPlaceMatchPoints,
 } from "./scoring";
-import type { Score } from "./types";
+import type { Score, Side } from "./types";
 
 /** Deterministic full tournament: home wins every match (varied scores). */
 function fullTournament(): Map<number, Score> {
@@ -66,6 +66,54 @@ describe("scoreUser — group stage", () => {
     );
     expect(score.groupPointsByMatch.get(thirdId)).toBe(6);
     expect(score.groupPoints).toBe(6);
+  });
+});
+
+describe("scoreUser — battle", () => {
+  it("adds a point when the predicted winner also won the battle", () => {
+    const predictions = new Map<number, Score>([
+      [1, { home: 2, away: 0 }], // predicted home
+      [2, { home: 0, away: 1 }], // predicted away
+      [3, { home: 1, away: 1 }], // predicted a draw: can't match a battle winner
+    ]);
+    const results = new Map<number, Score>([
+      [1, { home: 1, away: 0 }],
+      [2, { home: 2, away: 0 }],
+      [3, { home: 0, away: 0 }],
+    ]);
+    const battleWinners = new Map<number, Side>([
+      [1, "home"], // matches the prediction: +1
+      [2, "home"], // user predicted away: no point
+      [3, "home"], // user predicted a draw: no point
+    ]);
+    const score = scoreUser(predictions, results, undefined, battleWinners);
+    expect(score.battlePoints).toBe(1);
+  });
+
+  it("credits a pens-winner prediction whose team also won the battle", () => {
+    const thirdId = MATCHES.find((m) => m.phase === "third")!.id;
+    const score = scoreUser(
+      new Map<number, Score>([[thirdId, { home: 1, away: 1, winnerSide: "home" }]]),
+      new Map<number, Score>([[thirdId, { home: 2, away: 1 }]]),
+      undefined,
+      new Map<number, Side>([[thirdId, "home"]]),
+    );
+    expect(score.battlePoints).toBe(1);
+  });
+
+  it("ignores battles until the match has an official result", () => {
+    const score = scoreUser(
+      new Map<number, Score>([[1, { home: 2, away: 0 }]]),
+      new Map(),
+      undefined,
+      new Map<number, Side>([[1, "home"]]),
+    );
+    expect(score.battlePoints).toBe(0);
+  });
+
+  it("battlePoints is 0 when no battle winners are provided", () => {
+    const score = scoreUser(new Map(), new Map<number, Score>([[1, { home: 1, away: 0 }]]));
+    expect(score.battlePoints).toBe(0);
   });
 });
 
