@@ -41,7 +41,7 @@ export const ALL_KNOCKOUT_SCORED_MATCH_IDS: readonly number[] = [
 
 const outcome = (s: { home: number; away: number }) => Math.sign(s.home - s.away);
 
-function pickSide(score: { home: number; away: number; winnerSide?: Side | null }): Side | null {
+export function pickSide(score: { home: number; away: number; winnerSide?: Side | null }): Side | null {
   if (score.home > score.away) return "home";
   if (score.home < score.away) return "away";
   return score.winnerSide ?? null;

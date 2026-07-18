@@ -1,13 +1,13 @@
 import { and, eq, sql } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Swords } from "lucide-react";
 import { BattleArena } from "@/components/battle-arena";
 import { GroupSelect } from "@/components/group-select";
 import { PenaltyBadge } from "@/components/penalty-badge";
 import { TeamLabel } from "@/components/team-label";
 import { requireUser } from "@/lib/auth/session";
-import { isBattleOpen } from "@/lib/battle/rules";
+import { battleWinnerOf, isBattleOpen } from "@/lib/battle/rules";
 import { getDb, schema } from "@/lib/db";
 import { getVisibleGroups } from "@/lib/groups";
 import { MATCHES } from "@/lib/db/seed-data";
@@ -18,10 +18,11 @@ import {
   buildBracket,
   groupMatchPoints,
   knockoutMatchPoints,
+  pickSide,
   thirdPlaceMatchPoints,
   ROUND_VALUES,
 } from "@/lib/tournament";
-import { KNOCKOUT_EXACT_POINTS } from "@/lib/tournament/scoring";
+import { BATTLE_WIN_POINTS, KNOCKOUT_EXACT_POINTS } from "@/lib/tournament/scoring";
 
 async function PartidoContent({
   params,
@@ -100,6 +101,10 @@ async function PartidoContent({
           away: null,
         });
 
+  const battleTotals = { home: battleRow?.home ?? 0, away: battleRow?.away ?? 0 };
+  // Battle points only settle once the real result is in — matches scoreUser's rule.
+  const battleWinnerSide = real !== undefined ? battleWinnerOf(battleTotals) : null;
+
   const rowsRaw = userRows
     .map((u) => {
       const prediction =
@@ -107,6 +112,7 @@ async function PartidoContent({
           ? { home: u.homeScore, away: u.awayScore, winnerSide: u.winnerSide }
           : null;
       let points: number | null = null;
+      let wonBattle = false;
       if (prediction && real !== undefined) {
         if (match.phase === "group") {
           points = groupMatchPoints(prediction, real);
@@ -115,8 +121,14 @@ async function PartidoContent({
         } else {
           points = knockoutMatchPoints(match.phase, prediction, real);
         }
+        // Triple match: predicted winner, real winner and battle winner all agree.
+        wonBattle =
+          battleWinnerSide !== null &&
+          pickSide(real) === battleWinnerSide &&
+          pickSide(prediction) === battleWinnerSide;
+        if (wonBattle) points += BATTLE_WIN_POINTS;
       }
-      return { ...u, prediction, points };
+      return { ...u, prediction, points, wonBattle };
     })
     .sort(
       (a, b) =>
@@ -129,7 +141,6 @@ async function PartidoContent({
   const own = rowsRaw.find((r) => r.userId === session.sub);
   const rows = own ? [own, ...rowsRaw.filter((r) => r !== own)] : rowsRaw;
 
-  const battleTotals = { home: battleRow?.home ?? 0, away: battleRow?.away ?? 0 };
   const battleOpen = isBattleOpen({
     kickoffAt: new Date(match.kickoffAt),
     slot,
@@ -230,19 +241,26 @@ async function PartidoContent({
                     </span>
                   </Link>
                 </div>
-                {row.points !== null && (
-                  <span
-                    className={`shrink-0 rounded-full px-1.5 py-0.5 font-mono text-[11px] font-semibold ${
-                      row.points > 1
-                        ? "bg-volt-400/15 text-volt-400"
-                        : row.points === 1
-                          ? "bg-gold-400/15 text-gold-400"
-                          : "bg-pitch-700 text-ink-500"
-                    }`}
-                  >
-                    +{row.points}
-                  </span>
-                )}
+                <div className="flex shrink-0 items-center gap-1">
+                  {row.wonBattle && (
+                    <span title="Ganó el punto extra de la batalla">
+                      <Swords aria-hidden className="h-3.5 w-3.5 text-volt-400" />
+                    </span>
+                  )}
+                  {row.points !== null && (
+                    <span
+                      className={`rounded-full px-1.5 py-0.5 font-mono text-[11px] font-semibold ${
+                        row.points > 1
+                          ? "bg-volt-400/15 text-volt-400"
+                          : row.points === 1
+                            ? "bg-gold-400/15 text-gold-400"
+                            : "bg-pitch-700 text-ink-500"
+                      }`}
+                    >
+                      +{row.points}
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="flex items-center justify-center gap-2">
                 {row.prediction ? (
