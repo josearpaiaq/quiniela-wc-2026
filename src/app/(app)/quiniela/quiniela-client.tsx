@@ -198,7 +198,11 @@ export function QuinielaClient({
     const open = overrides.has(match.id) || (now < Date.parse(match.kickoffAt) && teamsReady);
     // battle is votable as soon as the real matchup is known, before kickoff
     const battleOpen = isBattleOpen(
-      { kickoffAt: new Date(match.kickoffAt), slot: { home: homeCode, away: awayCode } },
+      {
+        kickoffAt: new Date(match.kickoffAt),
+        slot: { home: homeCode, away: awayCode },
+        hasResult: real !== undefined,
+      },
       new Date(now),
     );
     const isToday = mounted && isSameLocalDay(new Date(match.kickoffAt), new Date(now));

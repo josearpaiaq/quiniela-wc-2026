@@ -9,21 +9,22 @@ import {
 import { getDb, schema } from "@/lib/db";
 import { MATCHES } from "@/lib/db/seed-data";
 import { overrideRowsToMap, rowsToScoreMap } from "@/lib/score-rows";
-import { buildBracket } from "@/lib/tournament";
+import { buildBracket, type Score } from "@/lib/tournament";
 
 type Db = ReturnType<typeof getDb>;
 type SeedMatch = (typeof MATCHES)[number];
 
-async function resolveSlot(db: Db, match: SeedMatch): Promise<BattleSlot> {
+async function resolveSlot(
+  db: Db,
+  match: SeedMatch,
+  results: Map<number, Score>,
+): Promise<BattleSlot> {
   if (match.phase === "group") {
     return { home: match.home ?? null, away: match.away ?? null };
   }
-  const [resultRows, overrideRows] = await Promise.all([
-    db.select().from(schema.results),
-    db.select().from(schema.knockoutOverrides),
-  ]);
+  const overrideRows = await db.select().from(schema.knockoutOverrides);
   return (
-    buildBracket(rowsToScoreMap(resultRows), overrideRowsToMap(overrideRows)).get(match.id) ?? {
+    buildBracket(results, overrideRowsToMap(overrideRows)).get(match.id) ?? {
       home: null,
       away: null,
     }
@@ -88,9 +89,14 @@ export async function POST(request: Request, ctx: RouteContext<"/api/battle/[mat
 
   const db = getDb();
 
-  // Re-checked server-side so nobody votes an undefined future match via curl.
-  const slot = await resolveSlot(db, match);
-  if (!isBattleOpen({ kickoffAt: new Date(match.kickoffAt), slot })) {
+  // Re-checked server-side so nobody votes an undefined future match via curl,
+  // and the battle locks as soon as the real score is captured.
+  const resultRows = await db.select().from(schema.results);
+  const results = rowsToScoreMap(resultRows);
+  const slot = await resolveSlot(db, match, results);
+  if (
+    !isBattleOpen({ kickoffAt: new Date(match.kickoffAt), slot, hasResult: results.has(matchId) })
+  ) {
     return Response.json({ error: "La batalla está cerrada" }, { status: 409 });
   }
 

@@ -130,7 +130,11 @@ async function PartidoContent({
   const rows = own ? [own, ...rowsRaw.filter((r) => r !== own)] : rowsRaw;
 
   const battleTotals = { home: battleRow?.home ?? 0, away: battleRow?.away ?? 0 };
-  const battleOpen = isBattleOpen({ kickoffAt: new Date(match.kickoffAt), slot });
+  const battleOpen = isBattleOpen({
+    kickoffAt: new Date(match.kickoffAt),
+    slot,
+    hasResult: real !== undefined,
+  });
   // hidden until both teams are known; a finished battle stays visible, frozen
   const showBattle =
     slot.home !== null &&

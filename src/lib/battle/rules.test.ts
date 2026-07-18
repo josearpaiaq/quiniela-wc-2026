@@ -28,6 +28,12 @@ describe("isBattleOpen", () => {
     expect(isBattleOpen({ kickoffAt: kickoff, slot }, new Date("2026-07-19T21:59:59Z"))).toBe(true);
     expect(isBattleOpen({ kickoffAt: kickoff, slot }, new Date("2026-07-19T22:00:00Z"))).toBe(false);
   });
+
+  it("closes as soon as the real score is captured, even inside the 3h window", () => {
+    const during = new Date("2026-07-19T20:30:00Z");
+    expect(isBattleOpen({ kickoffAt: kickoff, slot, hasResult: true }, during)).toBe(false);
+    expect(isBattleOpen({ kickoffAt: kickoff, slot, hasResult: false }, during)).toBe(true);
+  });
 });
 
 describe("battleFlushSchema", () => {
