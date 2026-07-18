@@ -19,6 +19,7 @@ export {
   GROUP_OUTCOME_POINTS,
   groupMatchPoints,
   knockoutMatchPoints,
+  pickSide,
   scoreUser,
   thirdPlaceMatchPoints,
 } from "./scoring";

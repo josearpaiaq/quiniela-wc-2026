@@ -24,13 +24,15 @@ export interface BattleSlot {
 
 /**
  * A battle opens as soon as both slot teams are known (group: seed data,
- * knockout: bracket derivation) and closes 3h after kickoff.
+ * knockout: bracket derivation) and closes when the real score is captured,
+ * or 3h after kickoff as a fallback.
  */
 export function isBattleOpen(
-  battle: { kickoffAt: Date; slot: BattleSlot },
+  battle: { kickoffAt: Date; slot: BattleSlot; hasResult?: boolean },
   now: Date = new Date(),
 ): boolean {
   if (!battle.slot.home || !battle.slot.away) return false;
+  if (battle.hasResult) return false;
   return now.getTime() < battle.kickoffAt.getTime() + BATTLE_CLOSE_AFTER_KICKOFF_MS;
 }
 

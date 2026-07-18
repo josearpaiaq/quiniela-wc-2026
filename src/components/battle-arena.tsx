@@ -101,6 +101,13 @@ export function BattleArena({
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(batch),
           });
+          if (res.status === 409) {
+            // battle closed server-side (real score captured): freeze on
+            // server truth instead of retrying until the 3h window expires
+            setPending({ home: 0, away: 0 });
+            setClosed(true);
+            return;
+          }
           if (!res.ok) throw new Error(String(res.status));
           const data: { accepted: boolean } & BattleState = await res.json();
           lastFlushAtRef.current = Date.now();
