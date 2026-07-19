@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import { NavLinks } from "@/components/nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ConfettiProvider } from "@/components/confetti";
+import { FinalDayTicker } from "@/components/final-day-ticker";
 
 async function HeaderSession() {
   const session = await getSession();
@@ -45,6 +46,12 @@ export default function AppLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-4 pb-24 md:pb-10">
+      <div className="-mx-4">
+        <Suspense fallback={null}>
+          <FinalDayTicker />
+        </Suspense>
+      </div>
+
       <header className="sticky top-0 z-30 -mx-4 mb-4 border-b border-line bg-pitch-950/90 px-4 py-3 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
           <div className="flex items-center gap-3 md:gap-6">
