@@ -1,13 +1,72 @@
 import { eq, inArray } from "drizzle-orm";
 import Link from "next/link";
 import { ArrowRight, Medal } from "lucide-react";
+import {
+  ChampionAutoReveal,
+  ChampionFireworksProvider,
+  ChampionReplayButton,
+} from "@/components/champion-fireworks";
 import { GroupSelect } from "@/components/group-select";
 import { requireUser } from "@/lib/auth/session";
+import { computeChampionIds } from "@/lib/champion";
 import { getDb, schema } from "@/lib/db";
 import { getVisibleGroups } from "@/lib/groups";
 import { battleRowsToWinners, overrideRowsToMap, rowsToScoreMap } from "@/lib/score-rows";
 import { scoreUser, type Score } from "@/lib/tournament";
 import { JoinGroupForm } from "./join-group-form";
+
+/** Fixed positions/colors/delays — rendered on the server, so no Math.random(). */
+const CHAMPION_CONFETTI: {
+  left: string;
+  duration: string;
+  delay: string;
+  kind: "dot" | "emoji";
+  value: string;
+}[] = [
+  { left: "6%", duration: "2.4s", delay: "0s", kind: "dot", value: "var(--color-gold-400)" },
+  { left: "18%", duration: "2.9s", delay: "0.5s", kind: "dot", value: "var(--color-volt-400)" },
+  { left: "28%", duration: "2.6s", delay: "1.1s", kind: "emoji", value: "🎉" },
+  { left: "40%", duration: "3.1s", delay: "0.2s", kind: "dot", value: "var(--color-gold-400)" },
+  { left: "50%", duration: "2.5s", delay: "1.4s", kind: "dot", value: "var(--color-ink-100)" },
+  { left: "60%", duration: "2.8s", delay: "0.7s", kind: "emoji", value: "⭐" },
+  { left: "68%", duration: "2.3s", delay: "1.6s", kind: "dot", value: "var(--color-volt-400)" },
+  { left: "78%", duration: "3.0s", delay: "0.9s", kind: "dot", value: "var(--color-gold-400)" },
+  { left: "86%", duration: "2.7s", delay: "0.3s", kind: "emoji", value: "🎉" },
+  { left: "94%", duration: "2.6s", delay: "1.2s", kind: "dot", value: "var(--color-volt-400)" },
+];
+
+function ChampionMiniConfetti() {
+  return (
+    <div className="champion-mini-confetti" aria-hidden>
+      {CHAMPION_CONFETTI.map((p, i) =>
+        p.kind === "emoji" ? (
+          <span
+            key={i}
+            style={{
+              left: p.left,
+              fontSize: "12px",
+              animation: `champion-mini-fall ${p.duration} ${p.delay} linear infinite`,
+            }}
+          >
+            {p.value}
+          </span>
+        ) : (
+          <span
+            key={i}
+            style={{
+              left: p.left,
+              width: "5px",
+              height: "10px",
+              borderRadius: "2px",
+              background: p.value,
+              animation: `champion-mini-fall ${p.duration} ${p.delay} linear infinite`,
+            }}
+          />
+        ),
+      )}
+    </div>
+  );
+}
 
 async function TablaContent({
   searchParams,
@@ -101,6 +160,10 @@ async function TablaContent({
     );
 
   const anyResults = results.size > 0;
+  const tournamentComplete = results.size === 104;
+  const championIds = computeChampionIds(
+    standings.map((s) => ({ id: s.user.id, total: s.score.total, exactos: s.exactos })),
+  );
 
   return (
     <div className="space-y-4">
@@ -121,47 +184,70 @@ async function TablaContent({
         </p>
       )}
 
-      <ol className="space-y-2">
-        {standings.map(({ user, score, filled, exactos }, index) => {
-          const isMe = user.id === session.sub;
-          return (
-            <li key={user.id}>
-              <Link
-                href={`/tabla/${user.id}`}
-                className={`flex items-center gap-3 rounded-xl border px-4 py-3 transition hover:border-line-bright ${
-                  isMe ? "border-volt-400/50 bg-volt-400/5" : "border-line bg-pitch-900"
-                } ${index === 0 ? "shadow-[0_0_30px_rgba(255,198,63,0.08)]" : ""}`}
-              >
-                <span className="flex w-8 justify-center font-display text-lg font-extrabold">
-                  {index === 0 ? (
-                    <Medal aria-label="puesto 1" className="h-5 w-5 text-gold-400" />
-                  ) : (
-                    <span className="text-ink-500">{index + 1}</span>
+      <ChampionFireworksProvider>
+        {tournamentComplete && championIds.size > 0 && (
+          <ChampionAutoReveal groupId={selected.id} />
+        )}
+        <ol className="space-y-2">
+          {standings.map(({ user, score, filled, exactos }, index) => {
+            const isMe = user.id === session.sub;
+            const isChampion = tournamentComplete && championIds.has(user.id);
+            const showMedal = tournamentComplete ? isChampion : index === 0;
+            return (
+              <li key={user.id}>
+                <Link
+                  href={`/tabla/${user.id}`}
+                  className={`flex items-center gap-3 rounded-xl border transition hover:border-line-bright ${
+                    isChampion ? "pl-4 pr-9 pt-6 pb-3" : "px-4 py-3"
+                  } ${isMe ? "border-volt-400/50 bg-volt-400/5" : "border-line bg-pitch-900"} ${
+                    index === 0 && !isChampion ? "shadow-[0_0_30px_rgba(255,198,63,0.08)]" : ""
+                  } ${isChampion ? "champion-card" : ""}`}
+                >
+                  {isChampion && (
+                    <>
+                      <div className="champion-shine" aria-hidden />
+                      <div className="champion-ribbon">CAMPEÓN</div>
+                      <ChampionMiniConfetti />
+                    </>
                   )}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-medium">
-                    {user.displayName}
-                    {isMe && <span className="ml-2 text-[10px] uppercase text-volt-400">tú</span>}
+                  <span className="flex w-8 shrink-0 justify-center font-display text-lg font-extrabold">
+                    {showMedal ? (
+                      isChampion ? (
+                        <ChampionReplayButton>
+                          <Medal aria-label="puesto 1 — repetir celebración" className="h-5 w-5 text-gold-400" />
+                        </ChampionReplayButton>
+                      ) : (
+                        <Medal aria-label="puesto 1" className="h-5 w-5 text-gold-400" />
+                      )
+                    ) : (
+                      <span className="text-ink-500">{index + 1}</span>
+                    )}
                   </span>
-                  <span className="block text-[11px] text-ink-500">
-                    {filled}/104 pronosticados
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium">
+                      {isChampion && <span className="champion-crown mr-1">👑</span>}
+                      {user.displayName}
+                      {isMe && <span className="ml-2 text-[10px] uppercase text-volt-400">tú</span>}
+                    </span>
+                    <span className="block text-[11px] text-ink-500">
+                      {filled}/104 pronosticados
+                    </span>
                   </span>
-                </span>
-                <span className="text-right">
-                  <span className="block font-mono text-[11px] text-ink-500">
-                    G {score.groupPoints} · Av {score.advancePoints} · B {score.battlePoints} ·
-                    ✓{exactos}
+                  <span className="text-right">
+                    <span className="block font-mono text-[11px] text-ink-500">
+                      G {score.groupPoints} · Av {score.advancePoints} · B {score.battlePoints} ·
+                      ✓{exactos}
+                    </span>
+                    <span className="block font-mono text-xl font-bold text-volt-400">
+                      {score.total}
+                    </span>
                   </span>
-                  <span className="block font-mono text-xl font-bold text-volt-400">
-                    {score.total}
-                  </span>
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-      </ol>
+                </Link>
+              </li>
+            );
+          })}
+        </ol>
+      </ChampionFireworksProvider>
 
       {standings.length > 0 && (
         <p className="px-1 text-center text-[11px] text-ink-500">
